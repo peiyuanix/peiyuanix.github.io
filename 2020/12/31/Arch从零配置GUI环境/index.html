@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.lpypl.top","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"disqus","storage":true,"lazyload":false,"nav":{"disqus":{"text":"Load Disqus","order":-1},"gitalk":{"order":-2}},"activeClass":"disqus"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="先随便列一下，有空再填坑arch安装dhcpcd,sudo,nvim,nvim alias as vim&#x2F;visudo alias &#39;sudo &#39; Xorg安装基本无需配置，只要写.xinitrc就行了，参考Arch Wiki 关于xinitrc的介绍  注意先复制系统xinitrc，在其基础上修改，如果非要自己写，至少要记得source &#x2F;etc&#x2F;X11&#x2F;xinit&#x2F;xinitr">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Arch从零配置GUI环境">
+<meta property="og:url" content="https://blog.lpypl.top/2020/12/31/Arch%E4%BB%8E%E9%9B%B6%E9%85%8D%E7%BD%AEGUI%E7%8E%AF%E5%A2%83/index.html">
+<meta property="og:site_name" content="Yuan&#39;s blog">
+<meta property="og:description" content="先随便列一下，有空再填坑arch安装dhcpcd,sudo,nvim,nvim alias as vim&#x2F;visudo alias &#39;sudo &#39; Xorg安装基本无需配置，只要写.xinitrc就行了，参考Arch Wiki 关于xinitrc的介绍  注意先复制系统xinitrc，在其基础上修改，如果非要自己写，至少要记得source &#x2F;etc&#x2F;X11&#x2F;xinit&#x2F;xinitr">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210102002032.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210102175329.png">
+<meta property="article:published_time" content="2020-12-31T23:50:00.000Z">
+<meta property="article:modified_time" content="2026-02-25T08:25:44.673Z">
+<meta property="article:author" content="Liu Peiyuan">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210102002032.png">
+
+<link rel="canonical" href="https://blog.lpypl.top/2020/12/31/Arch%E4%BB%8E%E9%9B%B6%E9%85%8D%E7%BD%AEGUI%E7%8E%AF%E5%A2%83/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Arch从零配置GUI环境 | Yuan's blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-190455776-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-190455776-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Yuan's blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Yuan's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">刘沛源的博客</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-rss">
+
+    <a href="/atom.xml" rel="section"><i class="fa fa-rss fa-fw"></i>RSS</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.lpypl.top/2020/12/31/Arch%E4%BB%8E%E9%9B%B6%E9%85%8D%E7%BD%AEGUI%E7%8E%AF%E5%A2%83/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/1639911209663.jpg">
+      <meta itemprop="name" content="Liu Peiyuan">
+      <meta itemprop="description" content="刘沛源的博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Yuan's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Arch从零配置GUI环境
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-01-01 07:50:00" itemprop="dateCreated datePublished" datetime="2021-01-01T07:50:00+08:00">2021-01-01</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2026-02-25 16:25:44" itemprop="dateModified" datetime="2026-02-25T16:25:44+08:00">2026-02-25</time>
+              </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus：</span>
+    
+    <a title="disqus" href="/2020/12/31/Arch%E4%BB%8E%E9%9B%B6%E9%85%8D%E7%BD%AEGUI%E7%8E%AF%E5%A2%83/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2020/12/31/Arch从零配置GUI环境/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="先随便列一下，有空再填坑"><a href="#先随便列一下，有空再填坑" class="headerlink" title="先随便列一下，有空再填坑"></a>先随便列一下，有空再填坑</h2><h2 id="arch安装"><a href="#arch安装" class="headerlink" title="arch安装"></a>arch安装</h2><p>dhcpcd,sudo,nvim,<br>nvim alias as vim/vi<br>sudo alias <code>&#39;sudo &#39;</code></p>
+<h2 id="Xorg安装"><a href="#Xorg安装" class="headerlink" title="Xorg安装"></a>Xorg安装</h2><p>基本无需配置，只要写.xinitrc就行了，参考Arch Wiki <a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/Xinit#xinitrc">关于xinitrc的介绍</a> </p>
+<p><strong>注意先复制系统xinitrc，在其基础上修改，如果非要自己写，至少要记得source <code>/etc/X11/xinit/xinitrc.d/</code>中的脚本</strong></p>
+<p>xorg-xserver,xorg-uitls,xorg-initx  </p>
+<h2 id="i3安装以及默认启动"><a href="#i3安装以及默认启动" class="headerlink" title="i3安装以及默认启动"></a>i3安装以及默认启动</h2><p><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/I3">https://wiki.archlinux.org/index.php/I3</a><br><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/Autostarting">https://wiki.archlinux.org/index.php/Autostarting</a>  </p>
+<p>这个其实没啥问题，不过后面的东西都是由于i3太过简单而必须自己配置</p>
+<h2 id="联网问题"><a href="#联网问题" class="headerlink" title="联网问题"></a>联网问题</h2><p>dhcpcd -&gt; NetworkManager，network-manager-applet</p>
+<h2 id="输入法问题"><a href="#输入法问题" class="headerlink" title="输入法问题"></a>输入法问题</h2><p><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/IBus">https://wiki.archlinux.org/index.php/IBus</a><br>ibus,rime</p>
+<h2 id="多屏显示设置"><a href="#多屏显示设置" class="headerlink" title="多屏显示设置"></a>多屏显示设置</h2><p><code>xrandr</code></p>
+<h2 id="使用-alsa-utlls-进行声音输入输出设备管理"><a href="#使用-alsa-utlls-进行声音输入输出设备管理" class="headerlink" title="使用 alsa-utlls 进行声音输入输出设备管理"></a>使用 <code>alsa-utlls</code> 进行声音输入输出设备管理</h2><p><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/Advanced_Linux_Sound_Architecture#Installation">https://wiki.archlinux.org/index.php/Advanced_Linux_Sound_Architecture#Installation</a></p>
+<p><code>alsamixer</code>,amixer</p>
+<h2 id="安装虚拟终端-termite"><a href="#安装虚拟终端-termite" class="headerlink" title="安装虚拟终端 termite"></a>安装虚拟终端 <code>termite</code></h2><h2 id="bash自动补全、智能提示"><a href="#bash自动补全、智能提示" class="headerlink" title="bash自动补全、智能提示"></a>bash自动补全、智能提示</h2><p>bash-completion软件包</p>
+<h2 id="使用-thunar-进行文件管理"><a href="#使用-thunar-进行文件管理" class="headerlink" title="使用 thunar 进行文件管理"></a>使用 <code>thunar</code> 进行文件管理</h2><p><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/File_manager_functionality#Overview">https://wiki.archlinux.org/index.php/File_manager_functionality#Overview</a><br><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/thunar">https://wiki.archlinux.org/index.php/thunar</a><br><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/Udisks">https://wiki.archlinux.org/index.php/Udisks</a></p>
+<p>需要关注 <code>gvfs</code> 系列软件包，还有 <code>udisks2</code>，它提供的<code>udiskctl</code>可以将设备挂载到 <code>/run/media/$USERNAME</code>的子目录中，可能ubuntu上所做的自动挂载也跟它有关系</p>
+<h2 id="使用-polkit-解决GUI中的权限问题"><a href="#使用-polkit-解决GUI中的权限问题" class="headerlink" title="使用 polkit 解决GUI中的权限问题"></a>使用 <code>polkit</code> 解决GUI中的权限问题</h2><p><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/Polkit">https://wiki.archlinux.org/index.php/Polkit</a></p>
+<p>比如 thunar中磁盘挂载时可能需要授权，gparted的启动需要授权</p>
+<p>相要使用它在GUI中授权还需要一个前端软件配合完成授权，我选择的是 <code>lxsession</code> 软件包，安装之后还需要设置使 <code>lxpolkit</code> 自启动，可以写在i3配置文件中。</p>
+<h2 id="GNOME-Keyring"><a href="#GNOME-Keyring" class="headerlink" title="GNOME Keyring"></a>GNOME Keyring</h2><h3 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h3><p><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/GNOME/Keyring">https://wiki.archlinux.org/index.php/GNOME/Keyring</a></p>
+<p>起因是这个<br><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210102002032.png" alt="keyring"></p>
+<p>Troubleshooting Guide页面为：<a target="_blank" rel="noopener" href="https://code.visualstudio.com/docs/editor/settings-sync#_troubleshooting-keychain-issues">https://code.visualstudio.com/docs/editor/settings-sync#_troubleshooting-keychain-issues</a>  </p>
+<h3 id="之前犯的愚蠢错误"><a href="#之前犯的愚蠢错误" class="headerlink" title="之前犯的愚蠢错误"></a>之前犯的愚蠢错误</h3><p>GUI界面叫<code>seahorse</code>，现在按照文档配置了一下，似乎vscode还会报错，但seahorse可以打开</p>
+<p>改用了 PAM 方法似乎还是不行呀</p>
+<p>现在可以了，记录下全过程</p>
+<p>componet是启动之后就没改过，下面说的只是gnome-keyring的配置</p>
+<ol>
+<li>只配.xinitrc，结果无效</li>
+<li>只配PAM，无效</li>
+<li>PAM和.xinitrc都配，无效</li>
+<li>配PAM，并在.xinitrc 中 <code>source /etc/X11/xinit/xinitrc.d/50-systemd-user.sh</code>，这次奇迹般的可以了，参考<br><a target="_blank" rel="noopener" href="https://unix.stackexchange.com/questions/265503/how-do-i-fix-no-such-secret-collection-at-path-for-gnome-keyring-and-arch-l">https://unix.stackexchange.com/questions/265503/how-do-i-fix-no-such-secret-collection-at-path-for-gnome-keyring-and-arch-l</a>  </li>
+<li>只source，不配PAM可以吗？</li>
+</ol>
+<h3 id="破案了！！！"><a href="#破案了！！！" class="headerlink" title="破案了！！！"></a>破案了！！！</h3><p>之前所说的一切错误都源自不规范定义的.xinitrc，正确的做法是先复制默认的配置，然后在默认配置基础上更改其行为，至少要保证source <code>/etc/X11/xinit/xinitrc.d/</code> 中的脚本。  </p>
+<p>这些脚本有些是应用定义的关键脚本，如果不执行的话，可能会导致应用行为不正常。而我原先的<code>.xinitrc</code>是自己写的，没有source <code>/etc/X11/xinit/xinitrc.d/</code> 中的脚本，出错也就不奇怪了，而默认的<code>/etc/X11/xinit/xinitrc</code>中就执行了类似的重要操作，在这个基础上修改就可以了  </p>
+<p>参考Arch Wiki <a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/Xinit#xinitrc">关于xinitrc的介绍</a><br><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210102175329.png" alt=""></p>
+<h3 id="其中可能涉及一个关键脚本"><a href="#其中可能涉及一个关键脚本" class="headerlink" title="其中可能涉及一个关键脚本"></a>其中可能涉及一个关键脚本</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[lpy@lpyarch ~]$ <span class="built_in">cat</span> /etc/X11/xinit/xinitrc.d/50-systemd-user.sh </span><br><span class="line"><span class="comment">#!/bin/sh</span></span><br><span class="line"></span><br><span class="line">systemctl --user import-environment DISPLAY XAUTHORITY</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="built_in">command</span> -v dbus-update-activation-environment &gt;/dev/null 2&gt;&amp;1; <span class="keyword">then</span></span><br><span class="line">    dbus-update-activation-environment DISPLAY XAUTHORITY</span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line">[lpy@lpyarch ~]$ </span><br></pre></td></tr></table></figure>
+<p><code>/etc/X11/xinit/xinitrc.d/50-systemd-user.sh</code> 会为用户级的systemd导入两个变量 <code>DISPLAY</code> 和<code>XAUTHORITY</code>，据说十分重要。</p>
+<p>参考这篇文章 <a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/systemd/User#DISPLAY_and_XAUTHORITY">https://wiki.archlinux.org/index.php/systemd/User#DISPLAY_and_XAUTHORITY</a><br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">DISPLAY is used by any X application to know which display to use and XAUTHORITY to provide a path to the user&#x27;s .Xauthority file and thus the cookie needed to access the X server. If you plan on launching X applications from systemd units, these variables need to be set. Systemd provides a script in /etc/X11/xinit/xinitrc.d/50-systemd-user.sh to import those variables into the systemd user session on X launch. [3] So unless you start X in a nonstandard way, user services should be aware of the DISPLAY and XAUTHORITY</span><br></pre></td></tr></table></figure></p>
+<h3 id="进一步分析"><a href="#进一步分析" class="headerlink" title="进一步分析"></a>进一步分析</h3><p>如果不source那个脚本，启动后会无法在seahorse中ublock，一个推测是，有运行在daemon的程序尝试让我输入密码来解锁，但它不知道DISPLAY和XAUTH，所以无法解锁</p>
+<p>相关日志如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Jan 02 18:56:45 lpyarch dbus-daemon[474]: [session uid=1000 pid=474] Activating service name=&#x27;org.gnome.keyring.SystemPrompter&#x27; requested by &#x27;:1.34&#x27; (uid=1000 pid=404 comm=&quot;/usr/bin/gnome-keyring-daemon --daemonize --login &quot;)</span><br><span class="line">Jan 02 18:56:45 lpyarch org.gnome.keyring.SystemPrompter[1890]: Unable to init server: Could not connect: Connection refused</span><br><span class="line">Jan 02 18:56:45 lpyarch gcr-prompter[1890]: cannot open display: </span><br><span class="line">Jan 02 18:56:45 lpyarch dbus-daemon[474]: [session uid=1000 pid=474] Activated service &#x27;org.gnome.keyring.SystemPrompter&#x27; failed: Process org.gnome.keyring.SystemPrompter exited with status 1</span><br><span class="line">Jan 02 18:56:45 lpyarch gnome-keyring-daemon[404]: couldn&#x27;t create system prompt: GDBus.Error:org.freedesktop.DBus.Error.Spawn.ChildExited: Process org.gnome.keyring.SystemPrompter exited with status 1</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Jan 02 18:57:15 lpyarch dbus-daemon[474]: [session uid=1000 pid=474] Activating service name=&#x27;org.gnome.keyring.SystemPrompter&#x27; requested by &#x27;:1.34&#x27; (uid=1000 pid=404 comm=&quot;/usr/bin/gnome-keyring-daemon --daemonize --login &quot;)</span><br><span class="line">Jan 02 18:57:16 lpyarch org.gnome.keyring.SystemPrompter[1899]: Unable to init server: Could not connect: Connection refused</span><br><span class="line">Jan 02 18:57:16 lpyarch gcr-prompter[1899]: cannot open display: </span><br><span class="line">Jan 02 18:57:16 lpyarch dbus-daemon[474]: [session uid=1000 pid=474] Activated service &#x27;org.gnome.keyring.SystemPrompter&#x27; failed: Process org.gnome.keyring.SystemPrompter exited with status 1</span><br><span class="line">Jan 02 18:57:16 lpyarch gnome-keyring-daemon[404]: couldn&#x27;t create system prompt: GDBus.Error:org.freedesktop.DBus.Error.Spawn.ChildExited: Process org.gnome.keyring.SystemPrompter exited with status 1</span><br></pre></td></tr></table></figure>
+<p>经过分析，可能的原因是：<br>相关应用通过dbus，请求keyring进行密码验证，但是kering运行在systemd中，这时候由于没有执行上述<code>/etc/X11/xinit/xinitrc.d/50-systemd-user.sh</code>， daemon中没有 <code>XAUTHORITY</code> 和 <code>DISPLAY</code>，keyring也就无法得知应该在哪里显示验证界面，所需授权文件又是哪个，故无法完成授权操作。</p>
+<p>那么，在遇到这个问题的通过命令行systemd和dbus设置环境变量理应也可以解决这个问题，下面就来实际操作一下。</p>
+<p>执行如下命令，再次去尝试unlock</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">systemctl --user import-environment DISPLAY XAUTHORITY</span><br><span class="line">dbus-update-activation-environment DISPLAY XAUTHORITY</span><br></pre></td></tr></table></figure>
+<p>这一次执行日志如下，可以看到最后的信息已经表明解锁成功了，当然在GUI里面也能看到效果，这一次成功弹出了请求密码的界面。</p>
+<p>我实际操作时，先故意输入了错误的密码，又一次输入了正确的密码，所以日志里有错误相关的信息也不奇怪<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">Jan 02 19:45:17 lpyarch dbus-daemon[474]: [session uid=1000 pid=474] Activating service name=&#x27;org.gnome.keyring.SystemPrompter&#x27; requested by &#x27;:1.34&#x27; (uid=1000 pid=404 comm=&quot;/usr/bin/gnome-keyring-daemon --daemonize --login &quot;)</span><br><span class="line">Jan 02 19:45:17 lpyarch gcr-prompter[3670]: Gcr: bus acquired: org.gnome.keyring.SystemPrompter</span><br><span class="line">Jan 02 19:45:17 lpyarch gcr-prompter[3670]: Gcr: registering prompter</span><br><span class="line">Jan 02 19:45:17 lpyarch gcr-prompter[3670]: Gcr: bus acquired: org.gnome.keyring.PrivatePrompter</span><br><span class="line">Jan 02 19:45:17 lpyarch dbus-daemon[474]: [session uid=1000 pid=474] Successfully activated service &#x27;org.gnome.keyring.SystemPrompter&#x27;</span><br><span class="line">Jan 02 19:45:17 lpyarch gcr-prompter[3670]: Gcr: acquired name: org.gnome.keyring.SystemPrompter</span><br><span class="line">Jan 02 19:45:17 lpyarch gcr-prompter[3670]: Gcr: received BeginPrompting call from callback /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:17 lpyarch gcr-prompter[3670]: Gcr: preparing a prompt for callback /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:17 lpyarch gcr-prompter[3670]: Gcr: creating new GcrPromptDialog prompt</span><br><span class="line">Jan 02 19:45:17 lpyarch gcr-prompter[3670]: GLib-GIO: _g_io_module_get_default: Found default implementation gvfs (GDaemonVfs) for ‘gio-vfs’</span><br><span class="line">Jan 02 19:45:17 lpyarch gcr-prompter[3670]: Gcr: automatically selecting secret exchange protocol</span><br><span class="line">Jan 02 19:45:17 lpyarch gcr-prompter[3670]: Gcr: generating public key</span><br><span class="line">Jan 02 19:45:18 lpyarch gcr-prompter[3670]: Gcr: beginning the secret exchange: [sx-aes-1]\npublic=2G5a5ux0oDxyKtwTtKQeVK1Y8xiejwsV88063Ue4SCKhagOPRZcHCF+XKSNjn6Xb74zHTN222E3/a5RrNbGcS8VRmPTVGxxUc9mNBlWlgUg4MtBNtKF4t9DPBTC4RA4zw1ybsu20vXqyCm+z1OCmic+SmrpBqQzSYYRFn3633l/WirlYBmK/B/W0OFtuCZYJH39M46n/RJCC2PsyVI0WATBN8wyjnIGWjeC/X87qs8hrYPQTFQVpdDwSZ3sTvfkM\n</span><br><span class="line">Jan 02 19:45:18 lpyarch gcr-prompter[3670]: Gcr: calling the PromptReady method on /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:18 lpyarch gcr-prompter[3670]: Gcr: acquired name: org.gnome.keyring.PrivatePrompter</span><br><span class="line">Jan 02 19:45:18 lpyarch gcr-prompter[3670]: Gcr: returned from the PromptReady method on /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:18 lpyarch gcr-prompter[3670]: Gcr: received PerformPrompt call from callback /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:18 lpyarch gcr-prompter[3670]: Gcr: receiving secret exchange: [sx-aes-1]\npublic=DD1Zv/mXj0MFxWWAleJ1k8HlPzKHpAIsC3Xx8PNnEe0MhY17Nu4NXBNI9isZXxMY5yJXBQbFWXHe9oE2URrSwAMIkkd3I2Myb2jWTgRjH+oIFDonvPGJTKfojyUBkWEvyy3B5a17W5RanbZ3lf0BF3PgA1boQDBiFIXrXwWUQedUkrf8OUdYmlcLFMR5eUpJDDcllwP8qeNonWJI0zI8OeC+xMc71BWTxVHcx9P7ArL3nX4r5Ol5j4NNV/YGoyZ/\n</span><br><span class="line">Jan 02 19:45:18 lpyarch gcr-prompter[3670]: Gcr: deriving shared transport key</span><br><span class="line">Jan 02 19:45:18 lpyarch gcr-prompter[3670]: Gcr: deriving transport key</span><br><span class="line">Jan 02 19:45:18 lpyarch gcr-prompter[3670]: Gcr: starting password prompt for callback /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:31 lpyarch gcr-prompter[3670]: Gcr: completed password prompt for callback :1.34@/org/gnome/keyring/Prompt/p56</span><br><span class="line">Jan 02 19:45:31 lpyarch gcr-prompter[3670]: Gcr: encrypting data</span><br><span class="line">Jan 02 19:45:31 lpyarch gcr-prompter[3670]: Gcr: sending the secret exchange: [sx-aes-1]\npublic=2G5a5ux0oDxyKtwTtKQeVK1Y8xiejwsV88063Ue4SCKhagOPRZcHCF+XKSNjn6Xb74zHTN222E3/a5RrNbGcS8VRmPTVGxxUc9mNBlWlgUg4MtBNtKF4t9DPBTC4RA4zw1ybsu20vXqyCm+z1OCmic+SmrpBqQzSYYRFn3633l/WirlYBmK/B/W0OFtuCZYJH39M46n/RJCC2PsyVI0WATBN8wyjnIGWjeC/X87qs8hrYPQTFQVpdDwSZ3sTvfkM\nsecret=YJvt3wtzr/dkfsZxg2nl1w==\niv=eTAIkduomuAKw163hVZkGQ==\n</span><br><span class="line">Jan 02 19:45:31 lpyarch gcr-prompter[3670]: Gcr: calling the PromptReady method on /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:31 lpyarch gcr-prompter[3670]: Gcr: returned from the PromptReady method on /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:31 lpyarch gcr-prompter[3670]: Gcr: received PerformPrompt call from callback /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:31 lpyarch gcr-prompter[3670]: Gcr: receiving secret exchange: [sx-aes-1]\npublic=DD1Zv/mXj0MFxWWAleJ1k8HlPzKHpAIsC3Xx8PNnEe0MhY17Nu4NXBNI9isZXxMY5yJXBQbFWXHe9oE2URrSwAMIkkd3I2Myb2jWTgRjH+oIFDonvPGJTKfojyUBkWEvyy3B5a17W5RanbZ3lf0BF3PgA1boQDBiFIXrXwWUQedUkrf8OUdYmlcLFMR5eUpJDDcllwP8qeNonWJI0zI8OeC+xMc71BWTxVHcx9P7ArL3nX4r5Ol5j4NNV/YGoyZ/\n</span><br><span class="line">Jan 02 19:45:31 lpyarch gcr-prompter[3670]: Gcr: starting password prompt for callback /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:38 lpyarch gcr-prompter[3670]: Gcr: completed password prompt for callback :1.34@/org/gnome/keyring/Prompt/p56</span><br><span class="line">Jan 02 19:45:38 lpyarch gcr-prompter[3670]: Gcr: encrypting data</span><br><span class="line">Jan 02 19:45:38 lpyarch gcr-prompter[3670]: Gcr: sending the secret exchange: [sx-aes-1]\npublic=2G5a5ux0oDxyKtwTtKQeVK1Y8xiejwsV88063Ue4SCKhagOPRZcHCF+XKSNjn6Xb74zHTN222E3/a5RrNbGcS8VRmPTVGxxUc9mNBlWlgUg4MtBNtKF4t9DPBTC4RA4zw1ybsu20vXqyCm+z1OCmic+SmrpBqQzSYYRFn3633l/WirlYBmK/B/W0OFtuCZYJH39M46n/RJCC2PsyVI0WATBN8wyjnIGWjeC/X87qs8hrYPQTFQVpdDwSZ3sTvfkM\nsecret=TOLxilfEWSSqacnL1hAEMw==\niv=uoSuwtbaJMNBvJt2sTdZpw==\n</span><br><span class="line">Jan 02 19:45:38 lpyarch gcr-prompter[3670]: Gcr: calling the PromptReady method on /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:38 lpyarch gcr-prompter[3670]: Gcr: returned from the PromptReady method on /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:38 lpyarch gcr-prompter[3670]: Gcr: received PerformPrompt call from callback /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:38 lpyarch gcr-prompter[3670]: Gcr: stopping prompting for operation /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:38 lpyarch gcr-prompter[3670]: Gcr: closing the prompt</span><br><span class="line">Jan 02 19:45:38 lpyarch gcr-prompter[3670]: Gcr: stopping prompting for operation /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:38 lpyarch gcr-prompter[3670]: Gcr: couldn&#x27;t find the callback for prompting operation /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:38 lpyarch gcr-prompter[3670]: Gcr: stopping prompting for operation /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:38 lpyarch gcr-prompter[3670]: Gcr: couldn&#x27;t find the callback for prompting operation /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:38 lpyarch gcr-prompter[3670]: Gcr: stopping prompting for operation /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:38 lpyarch gcr-prompter[3670]: Gcr: couldn&#x27;t find the callback for prompting operation /org/gnome/keyring/Prompt/p56@:1.34</span><br><span class="line">Jan 02 19:45:38 lpyarch gcr-prompter[3670]: Gcr: calling the PromptDone method on /org/gnome/keyring/Prompt/p56@:1.34, and ignoring reply</span><br><span class="line">Jan 02 19:45:49 lpyarch gcr-prompter[3670]: Gcr: 10 second inactivity timeout, quitting</span><br><span class="line">Jan 02 19:45:49 lpyarch gcr-prompter[3670]: Gcr: unregistering prompter</span><br><span class="line">Jan 02 19:45:49 lpyarch gcr-prompter[3670]: Gcr: disposing prompter</span><br><span class="line">Jan 02 19:45:49 lpyarch gcr-prompter[3670]: Gcr: finalizing prompter</span><br></pre></td></tr></table></figure></p>
+<p>至于为何在设置变量后就会自动授权而无需输入密码解锁，就是另一个问题了，可能跟设置的PAM有关。</p>
+<h2 id="锁屏"><a href="#锁屏" class="headerlink" title="锁屏"></a>锁屏</h2><p>xsslock，i3lock，这个地方可能需要再好好了解一下系统的Session的概念和作用</p>
+<p><a target="_blank" rel="noopener" href="https://rapiz.me/2019/lock-and-suspend/">https://rapiz.me/2019/lock-and-suspend/</a></p>
+<h2 id="壁纸"><a href="#壁纸" class="headerlink" title="壁纸"></a>壁纸</h2>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/12/30/%E5%9F%BA%E4%BA%8EXorg%E7%9A%84Linux%E6%A1%8C%E9%9D%A2%E7%8E%AF%E5%A2%83%EF%BC%88%E4%B8%89%EF%BC%89/" rel="prev" title="基于Xorg的Linux桌面环境（三）">
+      <i class="fa fa-chevron-left"></i> 基于Xorg的Linux桌面环境（三）
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/01/01/Linux%E7%9A%84PAM%E8%AE%A4%E8%AF%81%E6%9C%BA%E5%88%B6/" rel="next" title="Linux的PAM认证机制">
+      Linux的PAM认证机制 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E9%9A%8F%E4%BE%BF%E5%88%97%E4%B8%80%E4%B8%8B%EF%BC%8C%E6%9C%89%E7%A9%BA%E5%86%8D%E5%A1%AB%E5%9D%91"><span class="nav-number">1.</span> <span class="nav-text">先随便列一下，有空再填坑</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#arch%E5%AE%89%E8%A3%85"><span class="nav-number">2.</span> <span class="nav-text">arch安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Xorg%E5%AE%89%E8%A3%85"><span class="nav-number">3.</span> <span class="nav-text">Xorg安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#i3%E5%AE%89%E8%A3%85%E4%BB%A5%E5%8F%8A%E9%BB%98%E8%AE%A4%E5%90%AF%E5%8A%A8"><span class="nav-number">4.</span> <span class="nav-text">i3安装以及默认启动</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%81%94%E7%BD%91%E9%97%AE%E9%A2%98"><span class="nav-number">5.</span> <span class="nav-text">联网问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BE%93%E5%85%A5%E6%B3%95%E9%97%AE%E9%A2%98"><span class="nav-number">6.</span> <span class="nav-text">输入法问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%9A%E5%B1%8F%E6%98%BE%E7%A4%BA%E8%AE%BE%E7%BD%AE"><span class="nav-number">7.</span> <span class="nav-text">多屏显示设置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-alsa-utlls-%E8%BF%9B%E8%A1%8C%E5%A3%B0%E9%9F%B3%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E8%AE%BE%E5%A4%87%E7%AE%A1%E7%90%86"><span class="nav-number">8.</span> <span class="nav-text">使用 alsa-utlls 进行声音输入输出设备管理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E8%99%9A%E6%8B%9F%E7%BB%88%E7%AB%AF-termite"><span class="nav-number">9.</span> <span class="nav-text">安装虚拟终端 termite</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bash%E8%87%AA%E5%8A%A8%E8%A1%A5%E5%85%A8%E3%80%81%E6%99%BA%E8%83%BD%E6%8F%90%E7%A4%BA"><span class="nav-number">10.</span> <span class="nav-text">bash自动补全、智能提示</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-thunar-%E8%BF%9B%E8%A1%8C%E6%96%87%E4%BB%B6%E7%AE%A1%E7%90%86"><span class="nav-number">11.</span> <span class="nav-text">使用 thunar 进行文件管理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-polkit-%E8%A7%A3%E5%86%B3GUI%E4%B8%AD%E7%9A%84%E6%9D%83%E9%99%90%E9%97%AE%E9%A2%98"><span class="nav-number">12.</span> <span class="nav-text">使用 polkit 解决GUI中的权限问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#GNOME-Keyring"><span class="nav-number">13.</span> <span class="nav-text">GNOME Keyring</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">13.1.</span> <span class="nav-text">参考资料</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B9%8B%E5%89%8D%E7%8A%AF%E7%9A%84%E6%84%9A%E8%A0%A2%E9%94%99%E8%AF%AF"><span class="nav-number">13.2.</span> <span class="nav-text">之前犯的愚蠢错误</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A0%B4%E6%A1%88%E4%BA%86%EF%BC%81%EF%BC%81%EF%BC%81"><span class="nav-number">13.3.</span> <span class="nav-text">破案了！！！</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%B8%AD%E5%8F%AF%E8%83%BD%E6%B6%89%E5%8F%8A%E4%B8%80%E4%B8%AA%E5%85%B3%E9%94%AE%E8%84%9A%E6%9C%AC"><span class="nav-number">13.4.</span> <span class="nav-text">其中可能涉及一个关键脚本</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E4%B8%80%E6%AD%A5%E5%88%86%E6%9E%90"><span class="nav-number">13.5.</span> <span class="nav-text">进一步分析</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%94%81%E5%B1%8F"><span class="nav-number">14.</span> <span class="nav-text">锁屏</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A3%81%E7%BA%B8"><span class="nav-number">15.</span> <span class="nav-text">壁纸</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Liu Peiyuan"
+      src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/1639911209663.jpg">
+  <p class="site-author-name" itemprop="name">Liu Peiyuan</p>
+  <div class="site-description" itemprop="description">刘沛源的博客</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">46</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lpypl" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lpypl" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lpy.henu@gmail.com" title="E-Mail → mailto:lpy.henu@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://t.me/lpypl" title="Telegram → https:&#x2F;&#x2F;t.me&#x2F;lpypl" rel="noopener" target="_blank"><i class="fab fa-telegram fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Liu Peiyuan</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+      <span class="post-meta-item-text">站点总字数：</span>
+    <span title="站点总字数">67k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">2:02</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://lpypl.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "https://blog.lpypl.top/2020/12/31/Arch%E4%BB%8E%E9%9B%B6%E9%85%8D%E7%BD%AEGUI%E7%8E%AF%E5%A2%83/";
+    this.page.identifier = "2020/12/31/Arch从零配置GUI环境/";
+    this.page.title = "Arch从零配置GUI环境";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://lpypl.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

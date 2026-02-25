@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.lpypl.top","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"disqus","storage":true,"lazyload":false,"nav":{"disqus":{"text":"Load Disqus","order":-1},"gitalk":{"order":-2}},"activeClass":"disqus"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="OutlineIn this blog, you will know how to install Debian for an  Android device with root privileges.   No Termux. No Linux Deploy. No Black Box. Only Debian offical installer. Everything is under you">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Debian on Android: Install Debian from Scratch">
+<meta property="og:url" content="https://blog.lpypl.top/2023/12/02/Android%20as%20Server:%20Install%20Debian%20from%20Scratch/index.html">
+<meta property="og:site_name" content="Yuan&#39;s blog">
+<meta property="og:description" content="OutlineIn this blog, you will know how to install Debian for an  Android device with root privileges.   No Termux. No Linux Deploy. No Black Box. Only Debian offical installer. Everything is under you">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-12-02T09:48:00.000Z">
+<meta property="article:modified_time" content="2026-02-25T08:25:44.676Z">
+<meta property="article:author" content="Liu Peiyuan">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Debian">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://blog.lpypl.top/2023/12/02/Android%20as%20Server:%20Install%20Debian%20from%20Scratch/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Debian on Android: Install Debian from Scratch | Yuan's blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-190455776-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-190455776-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Yuan's blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Yuan's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">刘沛源的博客</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-rss">
+
+    <a href="/atom.xml" rel="section"><i class="fa fa-rss fa-fw"></i>RSS</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.lpypl.top/2023/12/02/Android%20as%20Server:%20Install%20Debian%20from%20Scratch/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/1639911209663.jpg">
+      <meta itemprop="name" content="Liu Peiyuan">
+      <meta itemprop="description" content="刘沛源的博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Yuan's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Debian on Android: Install Debian from Scratch
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-12-02 17:48:00" itemprop="dateCreated datePublished" datetime="2023-12-02T17:48:00+08:00">2023-12-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2026-02-25 16:25:44" itemprop="dateModified" datetime="2026-02-25T16:25:44+08:00">2026-02-25</time>
+              </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus：</span>
+    
+    <a title="disqus" href="/2023/12/02/Android%20as%20Server:%20Install%20Debian%20from%20Scratch/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2023/12/02/Android as Server: Install Debian from Scratch/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Outline"><a href="#Outline" class="headerlink" title="Outline"></a>Outline</h2><p>In this blog, you will know how to install Debian for an  Android device with root privileges.  </p>
+<p><strong>No Termux. No Linux Deploy. No Black Box.</strong></p>
+<p><strong>Only Debian offical installer. Everything is under your control.</strong></p>
+<h2 id="Prerequisites"><a href="#Prerequisites" class="headerlink" title="Prerequisites"></a>Prerequisites</h2><ul>
+<li><code>root privileges</code></li>
+<li><code>busybox</code></li>
+</ul>
+<p>With Magisk installed, you can get both root privileges and busybox.  </p>
+<h2 id="Install-Debian-with-debootstrap"><a href="#Install-Debian-with-debootstrap" class="headerlink" title="Install Debian with debootstrap"></a>Install Debian with <code>debootstrap</code></h2><h3 id="Switch-to-root-user"><a href="#Switch-to-root-user" class="headerlink" title="Switch to root user"></a>Switch to root user</h3><p>Most commands should be executed with root privileges.</p>
+<p>With adb, you can type:<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">adb shell</span><br><span class="line">su</span><br></pre></td></tr></table></figure></p>
+<h3 id="Prepare-necessary-commands"><a href="#Prepare-necessary-commands" class="headerlink" title="Prepare necessary commands"></a>Prepare necessary commands</h3><p><code>debootstrap</code> requires several basic commands to run.  </p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># The most important program is busybox, and we can use busybox binary from Magisk</span></span><br><span class="line"><span class="built_in">export</span> BUSYBOX=/data/adb/magisk/busybox</span><br><span class="line"></span><br><span class="line"><span class="comment"># Set the base directory of our Linux distributions</span></span><br><span class="line"><span class="built_in">export</span> LINUX_DIST=/data/linux_dist</span><br><span class="line"><span class="built_in">mkdir</span> -p <span class="variable">$LINUX_DIST</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Prepare necessary utils required by debootstrap</span></span><br><span class="line">LINUX_UTILS=<span class="variable">$LINUX_DIST</span>/utils</span><br><span class="line"><span class="built_in">mkdir</span> -p <span class="variable">$LINUX_UTILS</span></span><br><span class="line"><span class="built_in">ln</span> -s <span class="variable">$BUSYBOX</span> <span class="variable">$LINUX_UTILS</span>/ar</span><br><span class="line"><span class="built_in">ln</span> -s <span class="variable">$BUSYBOX</span> <span class="variable">$LINUX_UTILS</span>/wget</span><br><span class="line"><span class="built_in">ln</span> -s <span class="variable">$BUSYBOX</span> <span class="variable">$LINUX_UTILS</span>/xzcat</span><br><span class="line"><span class="built_in">export</span> PATH=<span class="variable">$LINUX_UTILS</span>:<span class="variable">$PATH</span></span><br></pre></td></tr></table></figure>
+<h3 id="Setup-debian-system-image-path-and-mount-point"><a href="#Setup-debian-system-image-path-and-mount-point" class="headerlink" title="Setup debian system image path and mount point"></a>Setup debian system image path and mount point</h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Set the debian inst directory</span></span><br><span class="line"><span class="built_in">export</span> DEBINST=<span class="variable">$LINUX_DIST</span>/debinst</span><br><span class="line"><span class="built_in">mkdir</span> -p <span class="variable">$DEBINST</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Debian rootfs image path</span></span><br><span class="line"><span class="built_in">export</span> DEBIMG=/sdcard/debian.img</span><br></pre></td></tr></table></figure>
+<h3 id="Create-a-img-file-as-rootfs"><a href="#Create-a-img-file-as-rootfs" class="headerlink" title="Create a img file as rootfs"></a>Create a img file as rootfs</h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">dd</span> <span class="keyword">if</span>=/dev/zero of=<span class="variable">$DEBIMG</span> bs=1G count=10</span><br><span class="line">mkfs.ext4 <span class="variable">$DEBIMG</span></span><br><span class="line"><span class="variable">$BUSYBOX</span> mount -o loop <span class="variable">$DEBIMG</span> <span class="variable">$DEBINST</span></span><br></pre></td></tr></table></figure>
+<h3 id="Build-pkgdetail-on-your-pc-server"><a href="#Build-pkgdetail-on-your-pc-server" class="headerlink" title="Build pkgdetail (on your pc/server)"></a>Build pkgdetail (on your pc/server)</h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">wget -O pkgdetails.c https://salsa.debian.org/installer-team/base-installer/-/raw/master/pkgdetails.c?inline=<span class="literal">false</span></span><br><span class="line">aarch64-linux-gnu-gcc -static -o pkgdetail pkgdetails.c</span><br></pre></td></tr></table></figure>
+<h3 id="Transfer-pkgdetail-to-Android-device"><a href="#Transfer-pkgdetail-to-Android-device" class="headerlink" title="Transfer pkgdetail to Android device"></a>Transfer <code>pkgdetail</code> to Android device</h3><p>Take adb as an example.<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb push pkgdetail /sdcard</span><br></pre></td></tr></table></figure></p>
+<h3 id="Install-debootstrap"><a href="#Install-debootstrap" class="headerlink" title="Install debootstrap"></a>Install debootstrap</h3><p>Download <code>debootstrap</code> and prepare <code>pkgdetails</code> for it.<br><strong>Note</strong>: the dest file is pkgdetail<strong>s</strong>, not pkgdetail</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Download debootstrap</span></span><br><span class="line"><span class="built_in">cd</span> <span class="variable">$LINUX_DIST</span></span><br><span class="line">wget -O debootstrap.tgz http://mirrors.aliyun.com/debian/pool/main/d/debootstrap/debootstrap_1.0.133.tar.gz</span><br><span class="line">tar -xf <span class="variable">$LINUX_DIST</span>/debootstrap.tgz</span><br><span class="line"></span><br><span class="line"><span class="comment"># Set the necessary environment: DEBOOTSTRAP_DIR</span></span><br><span class="line"><span class="built_in">export</span> DEBOOTSTRAP_DIR=<span class="variable">$LINUX_DIST</span>/debootstrap</span><br><span class="line"></span><br><span class="line"><span class="comment"># Put pkgdetail to $LINUX_DIST/pkgdetails</span></span><br><span class="line"><span class="comment"># !!! Note that the dest file is: pkgdetails (not pkgdetail)</span></span><br><span class="line"><span class="built_in">cp</span> /sdcard/pkgdetail <span class="variable">$DEBOOTSTRAP_DIR</span>/pkgdetails</span><br><span class="line"><span class="built_in">chmod</span> +x <span class="variable">$DEBOOTSTRAP_DIR</span>/pkgdetails</span><br></pre></td></tr></table></figure>
+<h3 id="Install-Debian-with-debootstrap-1"><a href="#Install-Debian-with-debootstrap-1" class="headerlink" title="Install Debian with debootstrap"></a>Install Debian with debootstrap</h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Install Debian</span></span><br><span class="line"><span class="variable">$DEBOOTSTRAP_DIR</span>/debootstrap --<span class="built_in">arch</span> arm64 stable <span class="variable">$DEBINST</span> http://mirrors.aliyun.com/debian/</span><br></pre></td></tr></table></figure>
+<h2 id="Configure-Debian"><a href="#Configure-Debian" class="headerlink" title="Configure Debian"></a>Configure Debian</h2><h3 id="Chroot-to-Debian-chroot-debian-sh"><a href="#Chroot-to-Debian-chroot-debian-sh" class="headerlink" title="Chroot to Debian: chroot-debian.sh"></a>Chroot to Debian: <code>chroot-debian.sh</code></h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">BUSYBOX=/data/adb/magisk/busybox</span><br><span class="line">DEBINST=/data/linux_dist/debinst</span><br><span class="line"></span><br><span class="line"><span class="variable">$BUSYBOX</span> mount --rbind /dev <span class="variable">$DEBINST</span>/dev/</span><br><span class="line"><span class="variable">$BUSYBOX</span> mount --rbind /proc <span class="variable">$DEBINST</span>/proc/</span><br><span class="line"><span class="variable">$BUSYBOX</span> mount --rbind /sys <span class="variable">$DEBINST</span>/sys/</span><br><span class="line"><span class="variable">$BUSYBOX</span> mount -t tmpfs tmpfs <span class="variable">$DEBINST</span>/tmp/</span><br><span class="line"></span><br><span class="line"><span class="variable">$BUSYBOX</span> <span class="built_in">chroot</span> <span class="variable">$DEBINST</span> /bin/env --ignore-environment su -l</span><br><span class="line"></span><br><span class="line"><span class="comment"># $BUSYBOX umount $DEBINST/dev/</span></span><br><span class="line"><span class="comment"># $BUSYBOX umount $DEBINST/proc/</span></span><br><span class="line"><span class="comment"># $BUSYBOX umount $DEBINST/sys/</span></span><br><span class="line"><span class="comment"># $BUSYBOX umount $DEBINST/tmp/</span></span><br></pre></td></tr></table></figure>
+<h3 id="Fix-network-error-inside-Debian"><a href="#Fix-network-error-inside-Debian" class="headerlink" title="Fix network error inside Debian"></a>Fix network error inside Debian</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"># Add network related groups required by Android kernel</span><br><span class="line">groupadd -g 3001 aid_bt</span><br><span class="line">groupadd -g 3002 aid_bt_net</span><br><span class="line">groupadd -g 3003 aid_inet</span><br><span class="line">groupadd -g 3004 aid_net_raw</span><br><span class="line">groupadd -g 3005 aid_admin</span><br><span class="line"></span><br><span class="line"># Add root to network groups so that root has network access rights</span><br><span class="line">usermod -aG aid_bt,aid_bt_net,aid_inet,aid_net_raw,aid_admin root</span><br><span class="line"></span><br><span class="line"># Set gid of _apt as aid_inet to fix apt network error</span><br><span class="line">usermod -g aid_inet _apt</span><br></pre></td></tr></table></figure>
+<h3 id="Configure-DNS-resolution"><a href="#Configure-DNS-resolution" class="headerlink" title="Configure DNS resolution"></a>Configure DNS resolution</h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> &gt;/etc/resolv.conf &lt;&lt;<span class="string">EOL</span></span><br><span class="line"><span class="string">domain lan</span></span><br><span class="line"><span class="string">search lan</span></span><br><span class="line"><span class="string">nameserver 223.5.5.5</span></span><br><span class="line"><span class="string">nameserver 223.6.6.6</span></span><br><span class="line"><span class="string">EOL</span></span><br></pre></td></tr></table></figure>
+<h3 id="Enjoy-your-Debian"><a href="#Enjoy-your-Debian" class="headerlink" title="Enjoy your Debian!"></a>Enjoy your Debian!</h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt update &amp;&amp; apt install neovim</span><br></pre></td></tr></table></figure>
+<h2 id="Troubles"><a href="#Troubles" class="headerlink" title="Troubles"></a>Troubles</h2><h3 id="Android-kernel-does-not-support-System-V-IPC"><a href="#Android-kernel-does-not-support-System-V-IPC" class="headerlink" title="Android kernel does not support System V IPC"></a>Android kernel does not support System V IPC</h3><p>Applications that rely on System V IPC, such as PostgreSQL, cannot be run directly in Debian on Android.  </p>
+<p>Possible solutions: Termux emulates System V IPC.</p>
+<p>Refer to:</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://android.googlesource.com/platform/ndk/+/4e159d95ebf23b5f72bb707b0cb1518ef96b3d03/docs/system/libc/SYSV-IPC.TXT">Android Doc - SYS-IPC</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/termux/termux-packages/tree/master/packages/libandroid-shmem">Termux - libandroid-shmem</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/termux/termux-packages/tree/master/packages/libandroid-sysv-semaphore">Termux - libandroid-sysv-semaphore</a></li>
+<li><a href="hhttps://github.com/termux/termux-packages/tree/master/packages/postgresql">Termux - postgresql</a></li>
+</ul>
+<h3 id="Android-kernel-allows-only-specific-groups-to-access-the-network"><a href="#Android-kernel-allows-only-specific-groups-to-access-the-network" class="headerlink" title="Android kernel allows only specific groups to access the network"></a>Android kernel allows only specific groups to access the network</h3><p>That’s why we add <code>root</code> to some groups and modify gid of <code>_apt</code> to <code>aid_inet</code></p>
+<p>Refer to:</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/36451444/what-can-cause-a-socket-permission-denied-error">stackoverflow - what can cause a socket() “Permission denied” error?</a></li>
+<li><a target="_blank" rel="noopener" href="https://android.googlesource.com/platform/system/core/+/android-9.0.0_r30/libcutils/include/private/android_filesystem_config.h">Andorid hardcoded groups</a></li>
+</ul>
+<p><strong>If your application fail to run, check if it’s a network issue!</strong></p>
+<p>For example, mysqld run as user <code>mysql</code>, and its default group is <code>mysql</code>.<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql:x:104:104:MySQL Server,,,:/nonexistent:/bin/false</span><br></pre></td></tr></table></figure></p>
+<p>Without modifying its group to aid_inet, <code>service start mysql</code> / <code>mysqld</code> would fail.</p>
+<p>If you do not change the group of user <code>mysql</code> to <code>aid_inet</code>, command <code>service start mysql</code> / <code>mysqld</code> will fail.</p>
+<h2 id="Optional-Steps"><a href="#Optional-Steps" class="headerlink" title="Optional Steps"></a>Optional Steps</h2><h3 id="Modern-bashrc"><a href="#Modern-bashrc" class="headerlink" title="Modern bashrc"></a>Modern bashrc</h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># ~/.bashrc: executed by bash(1) for non-login shells.</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Note: PS1 and umask are already set in /etc/profile. You should not</span></span><br><span class="line"><span class="comment"># need this unless you want different defaults for root.</span></span><br><span class="line">PS1=<span class="string">&quot;\[\e]0;\u@\h: \w\a\]<span class="variable">$&#123;debian_chroot:+($debian_chroot)&#125;</span>\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ &quot;</span></span><br><span class="line"><span class="comment"># umask 022</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">export</span> TERM=xterm-256color</span><br><span class="line"></span><br><span class="line"><span class="comment"># You may uncomment the following lines if you want `ls&#x27; to be colorized:</span></span><br><span class="line"><span class="built_in">export</span> LS_OPTIONS=<span class="string">&#x27;--color=auto&#x27;</span></span><br><span class="line"><span class="built_in">eval</span> <span class="string">&quot;`dircolors`&quot;</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">ls</span>=<span class="string">&#x27;ls $LS_OPTIONS&#x27;</span></span><br><span class="line"><span class="built_in">alias</span> ll=<span class="string">&#x27;ls $LS_OPTIONS -l&#x27;</span></span><br><span class="line"><span class="comment"># alias l=&#x27;ls $LS_OPTIONS -lA&#x27;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Some more alias to avoid making mistakes:</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">rm</span>=<span class="string">&#x27;rm -i&#x27;</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">cp</span>=<span class="string">&#x27;cp -i&#x27;</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">mv</span>=<span class="string">&#x27;mv -i&#x27;</span></span><br></pre></td></tr></table></figure>
+<h3 id="Update-apt-source-list"><a href="#Update-apt-source-list" class="headerlink" title="Update apt source list"></a>Update apt source list</h3><p>Refer to <a target="_blank" rel="noopener" href="https://mirrors.tuna.tsinghua.edu.cn/help/debian/">Tsinghua Mirrors - Debian</a></p>
+<h3 id="Install-sysvinit-core-to-run-daemons"><a href="#Install-sysvinit-core-to-run-daemons" class="headerlink" title="Install sysvinit-core to run daemons"></a>Install <code>sysvinit-core</code> to run daemons</h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">apt update &amp;&amp; apt install sysvinit-core</span><br><span class="line"><span class="comment"># apt remove systemd</span></span><br></pre></td></tr></table></figure>
+<h3 id="Configure-timezone"><a href="#Configure-timezone" class="headerlink" title="Configure timezone"></a>Configure timezone</h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dpkg-reconfigure tzdata</span><br></pre></td></tr></table></figure>
+<h3 id="Configure-locales"><a href="#Configure-locales" class="headerlink" title="Configure locales"></a>Configure locales</h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">apt install locales</span><br><span class="line">dpkg-reconfigure locales</span><br></pre></td></tr></table></figure>
+<h3 id="Install-and-configure-mariadb"><a href="#Install-and-configure-mariadb" class="headerlink" title="Install and configure mariadb"></a>Install and configure mariadb</h3><p>Install mariadb with proper apt source<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install mariadb-server</span><br></pre></td></tr></table></figure></p>
+<p>You must change group of user <code>mysql</code> to <code>aid_inet</code><br><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">usermod -g aid_inet mysql</span><br></pre></td></tr></table></figure></p>
+<p>If package <code>sysvinit-core</code> is installed, start mysqld with<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">service mysql start</span><br></pre></td></tr></table></figure></p>
+<p>Without <code>sysvinit-core</code>, you can run<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysqld</span><br></pre></td></tr></table></figure></p>
+<h3 id="Configure-bash-completion"><a href="#Configure-bash-completion" class="headerlink" title="Configure bash completion"></a>Configure bash completion</h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install bash-completion</span><br></pre></td></tr></table></figure>
+<h2 id="References"><a href="#References" class="headerlink" title="References"></a>References</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://www.debian.org/releases/bullseye/amd64/apds03.en.html">Debian - D.3. Installing Debian GNU/Linux from a Unix/Linux System</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/topjohnwu/Magisk">Github - Magisk</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/Android/" rel="tag"># Android</a>
+              <a href="/tags/Debian/" rel="tag"># Debian</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/03/24/Relay%20TCP%20upload%20traffic/" rel="prev" title="Relay TCP upload traffic and make download traffic go directly to the client">
+      <i class="fa fa-chevron-left"></i> Relay TCP upload traffic and make download traffic go directly to the client
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Outline"><span class="nav-number">1.</span> <span class="nav-text">Outline</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Prerequisites"><span class="nav-number">2.</span> <span class="nav-text">Prerequisites</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Install-Debian-with-debootstrap"><span class="nav-number">3.</span> <span class="nav-text">Install Debian with debootstrap</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Switch-to-root-user"><span class="nav-number">3.1.</span> <span class="nav-text">Switch to root user</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Prepare-necessary-commands"><span class="nav-number">3.2.</span> <span class="nav-text">Prepare necessary commands</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Setup-debian-system-image-path-and-mount-point"><span class="nav-number">3.3.</span> <span class="nav-text">Setup debian system image path and mount point</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Create-a-img-file-as-rootfs"><span class="nav-number">3.4.</span> <span class="nav-text">Create a img file as rootfs</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Build-pkgdetail-on-your-pc-server"><span class="nav-number">3.5.</span> <span class="nav-text">Build pkgdetail (on your pc&#x2F;server)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Transfer-pkgdetail-to-Android-device"><span class="nav-number">3.6.</span> <span class="nav-text">Transfer pkgdetail to Android device</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Install-debootstrap"><span class="nav-number">3.7.</span> <span class="nav-text">Install debootstrap</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Install-Debian-with-debootstrap-1"><span class="nav-number">3.8.</span> <span class="nav-text">Install Debian with debootstrap</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Configure-Debian"><span class="nav-number">4.</span> <span class="nav-text">Configure Debian</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Chroot-to-Debian-chroot-debian-sh"><span class="nav-number">4.1.</span> <span class="nav-text">Chroot to Debian: chroot-debian.sh</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Fix-network-error-inside-Debian"><span class="nav-number">4.2.</span> <span class="nav-text">Fix network error inside Debian</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Configure-DNS-resolution"><span class="nav-number">4.3.</span> <span class="nav-text">Configure DNS resolution</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Enjoy-your-Debian"><span class="nav-number">4.4.</span> <span class="nav-text">Enjoy your Debian!</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Troubles"><span class="nav-number">5.</span> <span class="nav-text">Troubles</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Android-kernel-does-not-support-System-V-IPC"><span class="nav-number">5.1.</span> <span class="nav-text">Android kernel does not support System V IPC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Android-kernel-allows-only-specific-groups-to-access-the-network"><span class="nav-number">5.2.</span> <span class="nav-text">Android kernel allows only specific groups to access the network</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Optional-Steps"><span class="nav-number">6.</span> <span class="nav-text">Optional Steps</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Modern-bashrc"><span class="nav-number">6.1.</span> <span class="nav-text">Modern bashrc</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Update-apt-source-list"><span class="nav-number">6.2.</span> <span class="nav-text">Update apt source list</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Install-sysvinit-core-to-run-daemons"><span class="nav-number">6.3.</span> <span class="nav-text">Install sysvinit-core to run daemons</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Configure-timezone"><span class="nav-number">6.4.</span> <span class="nav-text">Configure timezone</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Configure-locales"><span class="nav-number">6.5.</span> <span class="nav-text">Configure locales</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Install-and-configure-mariadb"><span class="nav-number">6.6.</span> <span class="nav-text">Install and configure mariadb</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Configure-bash-completion"><span class="nav-number">6.7.</span> <span class="nav-text">Configure bash completion</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#References"><span class="nav-number">7.</span> <span class="nav-text">References</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Liu Peiyuan"
+      src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/1639911209663.jpg">
+  <p class="site-author-name" itemprop="name">Liu Peiyuan</p>
+  <div class="site-description" itemprop="description">刘沛源的博客</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">46</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lpypl" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lpypl" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lpy.henu@gmail.com" title="E-Mail → mailto:lpy.henu@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://t.me/lpypl" title="Telegram → https:&#x2F;&#x2F;t.me&#x2F;lpypl" rel="noopener" target="_blank"><i class="fab fa-telegram fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Liu Peiyuan</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+      <span class="post-meta-item-text">站点总字数：</span>
+    <span title="站点总字数">67k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">2:02</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://lpypl.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "https://blog.lpypl.top/2023/12/02/Android%20as%20Server:%20Install%20Debian%20from%20Scratch/";
+    this.page.identifier = "2023/12/02/Android as Server: Install Debian from Scratch/";
+    this.page.title = "Debian on Android: Install Debian from Scratch";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://lpypl.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.lpypl.top","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"disqus","storage":true,"lazyload":false,"nav":{"disqus":{"text":"Load Disqus","order":-1},"gitalk":{"order":-2}},"activeClass":"disqus"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="说明对于Ubuntu 20.10已经可以开箱即用，不过对于Debian10，Arch等系统还是需要专门进行配置才行。   方案一 使用开源驱动nouveau此方案在此时最新的Arch上可行（我的是1050Ti），如果不想折腾直接安装nouveau软件包即可。但是在我的Debian10上并不能直接使用，在此系统上如果没有在内核启动参数添加nouveau.modeset&#x3D;0的话会直接卡到无法操作，所以">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Nvidia双显卡笔记本双屏配置">
+<meta property="og:url" content="https://blog.lpypl.top/2021/01/16/Nvidia%E5%8F%8C%E6%98%BE%E5%8D%A1%E7%AC%94%E8%AE%B0%E6%9C%AC%E5%8F%8C%E5%B1%8F%E9%85%8D%E7%BD%AE/index.html">
+<meta property="og:site_name" content="Yuan&#39;s blog">
+<meta property="og:description" content="说明对于Ubuntu 20.10已经可以开箱即用，不过对于Debian10，Arch等系统还是需要专门进行配置才行。   方案一 使用开源驱动nouveau此方案在此时最新的Arch上可行（我的是1050Ti），如果不想折腾直接安装nouveau软件包即可。但是在我的Debian10上并不能直接使用，在此系统上如果没有在内核启动参数添加nouveau.modeset&#x3D;0的话会直接卡到无法操作，所以">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-01-16T03:45:00.000Z">
+<meta property="article:modified_time" content="2026-02-25T08:25:44.674Z">
+<meta property="article:author" content="Liu Peiyuan">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="X">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://blog.lpypl.top/2021/01/16/Nvidia%E5%8F%8C%E6%98%BE%E5%8D%A1%E7%AC%94%E8%AE%B0%E6%9C%AC%E5%8F%8C%E5%B1%8F%E9%85%8D%E7%BD%AE/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Nvidia双显卡笔记本双屏配置 | Yuan's blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-190455776-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-190455776-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Yuan's blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Yuan's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">刘沛源的博客</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-rss">
+
+    <a href="/atom.xml" rel="section"><i class="fa fa-rss fa-fw"></i>RSS</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.lpypl.top/2021/01/16/Nvidia%E5%8F%8C%E6%98%BE%E5%8D%A1%E7%AC%94%E8%AE%B0%E6%9C%AC%E5%8F%8C%E5%B1%8F%E9%85%8D%E7%BD%AE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/1639911209663.jpg">
+      <meta itemprop="name" content="Liu Peiyuan">
+      <meta itemprop="description" content="刘沛源的博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Yuan's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Nvidia双显卡笔记本双屏配置
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-01-16 11:45:00" itemprop="dateCreated datePublished" datetime="2021-01-16T11:45:00+08:00">2021-01-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2026-02-25 16:25:44" itemprop="dateModified" datetime="2026-02-25T16:25:44+08:00">2026-02-25</time>
+              </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus：</span>
+    
+    <a title="disqus" href="/2021/01/16/Nvidia%E5%8F%8C%E6%98%BE%E5%8D%A1%E7%AC%94%E8%AE%B0%E6%9C%AC%E5%8F%8C%E5%B1%8F%E9%85%8D%E7%BD%AE/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2021/01/16/Nvidia双显卡笔记本双屏配置/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.2k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>2 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h2><p>对于Ubuntu 20.10已经可以开箱即用，不过对于Debian10，Arch等系统还是需要专门进行配置才行。  </p>
+<h2 id="方案一-使用开源驱动nouveau"><a href="#方案一-使用开源驱动nouveau" class="headerlink" title="方案一 使用开源驱动nouveau"></a>方案一 使用开源驱动nouveau</h2><p>此方案在此时最新的Arch上可行（我的是1050Ti），如果不想折腾直接安装nouveau软件包即可。<br>但是在我的Debian10上并不能直接使用，在此系统上如果没有在内核启动参数添加<code>nouveau.modeset=0</code>的话会直接卡到无法操作，所以PASS。  </p>
+<h2 id="方案二-使用Nvidia官方驱动，采用Nvidia单显卡渲染"><a href="#方案二-使用Nvidia官方驱动，采用Nvidia单显卡渲染" class="headerlink" title="方案二 使用Nvidia官方驱动，采用Nvidia单显卡渲染"></a>方案二 使用Nvidia官方驱动，采用Nvidia单显卡渲染</h2><p>步骤如下。</p>
+<h3 id="安装nvidia驱动"><a href="#安装nvidia驱动" class="headerlink" title="安装nvidia驱动"></a>安装nvidia驱动</h3><p>这一步根据系统不同安装不同的软件包即可，一般情况下，安装nvidia软件包的时候会自动blasklist nouveau，如果是上古版本可能需要手动blasklist。</p>
+<h3 id="xorg-conf配置"><a href="#xorg-conf配置" class="headerlink" title="xorg.conf配置"></a>xorg.conf配置</h3><p>可以在xorg.conf中进行具体配置，也可以在xorg.conf.d中添加一个nvidia配置用于自动配置，第二种方式不需要xorg.conf文件。</p>
+<h4 id="方法一-直接配置xorg-conf文件"><a href="#方法一-直接配置xorg-conf文件" class="headerlink" title="方法一 直接配置xorg.conf文件"></a>方法一 直接配置xorg.conf文件</h4><p>为Nvidia显卡配置驱动nvidia，为Intel核显配置驱动modesetting，具体工作原理参见debian和nvidia文档。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">Section <span class="string">&quot;ServerLayout&quot;</span></span><br><span class="line">    Identifier     <span class="string">&quot;Layout0&quot;</span></span><br><span class="line">    Screen      0  <span class="string">&quot;nvidia&quot;</span></span><br><span class="line">    Inactive       <span class="string">&quot;intel&quot;</span></span><br><span class="line">EndSection</span><br><span class="line"></span><br><span class="line">Section <span class="string">&quot;Device&quot;</span></span><br><span class="line">    Identifier     <span class="string">&quot;nvidia&quot;</span></span><br><span class="line">    Driver         <span class="string">&quot;nvidia&quot;</span></span><br><span class="line">    <span class="comment"># By default, the NVIDIA X driver will bail out if there </span></span><br><span class="line">    <span class="comment"># are no displays available. In order to ensure that the </span></span><br><span class="line">    <span class="comment"># X server can start with no heads connected directly to </span></span><br><span class="line">    <span class="comment"># the dGPU, you must add </span></span><br><span class="line">    <span class="comment"># &#x27;Option &quot;AllowEmptyInitialConfiguration&quot;&#x27; to the </span></span><br><span class="line">    <span class="comment"># &quot;Screen&quot; section of xorg.conf.</span></span><br><span class="line">    Option         <span class="string">&quot;AllowEmptyInitialConfiguration&quot;</span></span><br><span class="line">    VendorName     <span class="string">&quot;NVIDIA Corporation&quot;</span></span><br><span class="line">EndSection</span><br><span class="line"></span><br><span class="line">Section <span class="string">&quot;Device&quot;</span></span><br><span class="line">    Identifier     <span class="string">&quot;intel&quot;</span></span><br><span class="line">    <span class="comment"># By default, your xorg.conf will be set up such that only</span></span><br><span class="line">    <span class="comment"># the NVIDIA driver will be loaded. In order to ensure </span></span><br><span class="line">    <span class="comment"># that the iGPU’s heads are available for configuration, </span></span><br><span class="line">    <span class="comment"># the &#x27;modesetting&#x27; driver must be specified.</span></span><br><span class="line">    Driver         <span class="string">&quot;modesetting&quot;</span></span><br><span class="line">    VendorName     <span class="string">&quot;Intel Graphics&quot;</span></span><br><span class="line">EndSection</span><br><span class="line"></span><br><span class="line">Section <span class="string">&quot;Screen&quot;</span></span><br><span class="line">    Identifier     <span class="string">&quot;nvidia&quot;</span></span><br><span class="line">    Device         <span class="string">&quot;nvidia&quot;</span></span><br><span class="line">EndSection</span><br><span class="line"></span><br><span class="line">Section <span class="string">&quot;Screen&quot;</span></span><br><span class="line">    Identifier     <span class="string">&quot;intel&quot;</span></span><br><span class="line">    Device         <span class="string">&quot;intel&quot;</span></span><br><span class="line">EndSection</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>其实有一个官方工具<code>nvidia-xconfig</code>可以自动生成配置，但是它生成的配置只会在外接显示器上显示，所以需要自己配置双屏，不过可以借助此工具生成一个配置框架再修改。</p>
+<h4 id="方法二-添加文件-etc-X11-xorg-conf-d-10-nvidia-drm-outputclass-conf指导系统进行自动配置"><a href="#方法二-添加文件-etc-X11-xorg-conf-d-10-nvidia-drm-outputclass-conf指导系统进行自动配置" class="headerlink" title="方法二 添加文件/etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf指导系统进行自动配置"></a>方法二 添加文件<code>/etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf</code>指导系统进行自动配置</h4><p>这个方法来自<a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/NVIDIA_Optimus#Use_NVIDIA_graphics_only">Arch的文档</a>，和方法一的核心配置大致相同，只是方法一是直接指定了Device，Screen，ServerLayout等，这里只是添加OutputClass，指导X Server自动配置。</p>
+<p>添加文件<code>/etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf</code>，内容如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">Section &quot;OutputClass&quot;</span><br><span class="line">	Identifier  &quot;intel&quot;</span><br><span class="line">	MatchDriver &quot;i915&quot;</span><br><span class="line">	Driver      &quot;modesetting&quot;</span><br><span class="line">EndSection</span><br><span class="line"></span><br><span class="line">Section &quot;OutputClass&quot;</span><br><span class="line">	Identifier  &quot;nvidia&quot;</span><br><span class="line">	MatchDriver &quot;nvidia-drm&quot;</span><br><span class="line">	Driver      &quot;nvidia&quot;</span><br><span class="line">	Option      &quot;AllowEmptyInitialConfiguration&quot;</span><br><span class="line">	Option      &quot;PrimaryGPU&quot;   &quot;yes&quot;</span><br><span class="line">	ModulePath  &quot;/usr/lib/nvidia/xorg&quot;</span><br><span class="line">	ModulePath  &quot;/usr/lib/xorg/modules&quot;</span><br><span class="line">EndSection</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="使用xrandr配置双屏"><a href="#使用xrandr配置双屏" class="headerlink" title="使用xrandr配置双屏"></a>使用<code>xrandr</code>配置双屏</h3><p>配置完上面的之后可能需要重启X服务，最简单的方法大概就是直接重启机器了。  </p>
+<p>配置内容如下:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">xrandr --setprovideroutputsource modesetting NVIDIA-0</span><br><span class="line">xrandr --auto</span><br><span class="line"><span class="comment"># 如果显示DPI不正常的话添加下面的DPI配置</span></span><br><span class="line"><span class="comment"># xrandr --dpi 96</span></span><br></pre></td></tr></table></figure>
+<p>其中最关键的是第一条命令。可以把这几条命令写入 <code>~/.xinitrc</code> 或者 <code>~/xsession</code>，根据自己的具体情况吧，也可能需要配置你的Display Manager（如果有的话）。</p>
+<p>核心步骤已经说的差不多了，到这里为止应该已经可以在xrandr中看到内置显示器和外置显示器都处于connected状态了，已经可以根据自己的需要进行输出了。</p>
+<p>顺便附上自己的 <code>.xinitrc</code>，这来自一台没有使用Display Manager的Arch系统，在 <code>.xinitrc</code> 的最后启动了i3桌面管理器。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#######################################################</span></span><br><span class="line"><span class="comment">#            original /etc/X11/xinit/xinitrc          #</span></span><br><span class="line"><span class="comment">#######################################################</span></span><br><span class="line"></span><br><span class="line">userresources=<span class="variable">$HOME</span>/.Xresources</span><br><span class="line">usermodmap=<span class="variable">$HOME</span>/.Xmodmap</span><br><span class="line">sysresources=/etc/X11/xinit/.Xresources</span><br><span class="line">sysmodmap=/etc/X11/xinit/.Xmodmap</span><br><span class="line"></span><br><span class="line"><span class="comment"># merge in defaults and keymaps</span></span><br><span class="line"><span class="keyword">if</span> [ -f <span class="variable">$sysresources</span> ]; <span class="keyword">then</span></span><br><span class="line">    xrdb -merge <span class="variable">$sysresources</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ -f <span class="variable">$sysmodmap</span> ]; <span class="keyword">then</span></span><br><span class="line">    xmodmap <span class="variable">$sysmodmap</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ -f <span class="string">&quot;<span class="variable">$userresources</span>&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">    xrdb -merge <span class="string">&quot;<span class="variable">$userresources</span>&quot;</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ -f <span class="string">&quot;<span class="variable">$usermodmap</span>&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">    xmodmap <span class="string">&quot;<span class="variable">$usermodmap</span>&quot;</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># start some nice programs</span></span><br><span class="line"><span class="keyword">if</span> [ -d /etc/X11/xinit/xinitrc.d ] ; <span class="keyword">then</span></span><br><span class="line"> <span class="keyword">for</span> f <span class="keyword">in</span> /etc/X11/xinit/xinitrc.d/?*.sh ; <span class="keyword">do</span></span><br><span class="line">  [ -x <span class="string">&quot;<span class="variable">$f</span>&quot;</span> ] &amp;&amp; . <span class="string">&quot;<span class="variable">$f</span>&quot;</span></span><br><span class="line"> <span class="keyword">done</span></span><br><span class="line"> <span class="built_in">unset</span> f</span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">#######################################################</span></span><br><span class="line"><span class="comment">#                     lpy&#x27;s xinitrc                   #</span></span><br><span class="line"><span class="comment">#######################################################</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Dual Display</span></span><br><span class="line"><span class="comment"># The X server must be told to configure iGPU displays using PRIME. </span></span><br><span class="line"><span class="comment"># This can be done using the ‘xrandr’ command line tool, </span></span><br><span class="line"><span class="comment"># via ‘xrandr –setprovideroutputsource modesetting NVIDIA-0’. </span></span><br><span class="line"><span class="comment"># If this fails, you can verify the available graphics devices </span></span><br><span class="line"><span class="comment"># using ‘xrandr –listproviders’.</span></span><br><span class="line">xrandr --setprovideroutputsource modesetting NVIDIA-0</span><br><span class="line"><span class="comment"># Once PRIME is configured as described above, the iGPU’s heads may </span></span><br><span class="line"><span class="comment"># be configured as if they were the dGPU’s with any RandR-aware tool, </span></span><br><span class="line"><span class="comment"># be it ‘xrandr’ or a distro-provided graphical tool. The easiest way </span></span><br><span class="line"><span class="comment"># to get something to display is ‘xrandr –auto’, but more complicated </span></span><br><span class="line"><span class="comment"># configuration is possible as well.</span></span><br><span class="line">xrandr --auto</span><br><span class="line"><span class="comment"># If your display dpi is not correct add the following line</span></span><br><span class="line"><span class="comment"># xrandr --dpi 96</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># Disable DPMS turning off the screen</span></span><br><span class="line">xset -dpms</span><br><span class="line">xset s off</span><br><span class="line"></span><br><span class="line"><span class="comment"># Disable bell</span></span><br><span class="line">xset -b</span><br><span class="line"></span><br><span class="line"><span class="comment"># Enable zapping (C-A-&lt;Bksp&gt; kills X)</span></span><br><span class="line">setxkbmap -option terminate:ctrl_alt_bksp</span><br><span class="line"></span><br><span class="line"><span class="comment"># Enforce correct locales from the beginning:</span></span><br><span class="line"><span class="comment"># LC_ALL is unset since it overwrites everything</span></span><br><span class="line"><span class="comment"># LANG=de_DE.UTF-8 is used, except for:</span></span><br><span class="line"><span class="comment"># LC_MESSAGES=C never translates program output</span></span><br><span class="line"><span class="comment"># LC_TIME=en_DK leads to yyyy-mm-dd hh:mm date/time output</span></span><br><span class="line"><span class="built_in">unset</span> LC_ALL</span><br><span class="line"><span class="built_in">export</span> LANG=zh_CN.UTF-8</span><br><span class="line"><span class="built_in">export</span> LC_MESSAGES=C</span><br><span class="line"><span class="built_in">export</span> LC_TIME=en_US.UTF-8</span><br><span class="line"></span><br><span class="line"><span class="comment"># Use XToolkit in java applications</span></span><br><span class="line"><span class="built_in">export</span> AWT_TOOLKIT=XToolkit</span><br><span class="line"></span><br><span class="line"><span class="comment"># Set background color</span></span><br><span class="line">xsetroot -solid <span class="string">&quot;#333333&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Enable core dumps in case something goes wrong</span></span><br><span class="line"><span class="built_in">ulimit</span> -c unlimited</span><br><span class="line"></span><br><span class="line"><span class="comment"># input method</span></span><br><span class="line"><span class="built_in">export</span> GTK_IM_MODULE=ibus</span><br><span class="line"><span class="built_in">export</span> QT_IM_MODULE=ibus</span><br><span class="line"><span class="built_in">export</span> XMODIFIERS=@im=ibus</span><br><span class="line"></span><br><span class="line"><span class="comment"># i3-sensible-terminal</span></span><br><span class="line"><span class="built_in">export</span> TERMINAL=termite</span><br><span class="line"></span><br><span class="line"><span class="comment"># Start i3 and log to ~/.i3/logfile</span></span><br><span class="line"><span class="built_in">mkdir</span> -p ~/.i3/log</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;Starting at <span class="subst">$(date)</span>&quot;</span> &gt;&gt; ~/.i3/log/<span class="string">&quot;<span class="subst">$(date +%Y%m%d)</span>&quot;</span>.<span class="built_in">log</span></span><br><span class="line"><span class="built_in">exec</span> /usr/bin/i3 -V -d all &gt;&gt; ~/.i3/log/<span class="string">&quot;<span class="subst">$(date +%Y%m%d)</span>&quot;</span>.<span class="built_in">log</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p><a target="_blank" rel="noopener" href="https://wiki.debian.org/NVIDIA%20Optimus">Debian Wiki - NVIDIA Optimus</a><br><a target="_blank" rel="noopener" href="https://forums.developer.nvidia.com/t/prime-and-prime-synchronization/44423">Nvidia Forums - Prime and Prime synchronization</a><br><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/NVIDIA_Optimus#Use_NVIDIA_graphics_only">Arch Wiki - NVIDIA Optimus</a>  </p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/X/" rel="tag"># X</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/01/02/DBus%E5%92%8Cfreedesktop/" rel="prev" title="DBus和freedesktop">
+      <i class="fa fa-chevron-left"></i> DBus和freedesktop
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/05/20/RSA%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/" rel="next" title="RSA加密算法阅读笔记">
+      RSA加密算法阅读笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%B4%E6%98%8E"><span class="nav-number">1.</span> <span class="nav-text">说明</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%A1%88%E4%B8%80-%E4%BD%BF%E7%94%A8%E5%BC%80%E6%BA%90%E9%A9%B1%E5%8A%A8nouveau"><span class="nav-number">2.</span> <span class="nav-text">方案一 使用开源驱动nouveau</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%A1%88%E4%BA%8C-%E4%BD%BF%E7%94%A8Nvidia%E5%AE%98%E6%96%B9%E9%A9%B1%E5%8A%A8%EF%BC%8C%E9%87%87%E7%94%A8Nvidia%E5%8D%95%E6%98%BE%E5%8D%A1%E6%B8%B2%E6%9F%93"><span class="nav-number">3.</span> <span class="nav-text">方案二 使用Nvidia官方驱动，采用Nvidia单显卡渲染</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85nvidia%E9%A9%B1%E5%8A%A8"><span class="nav-number">3.1.</span> <span class="nav-text">安装nvidia驱动</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#xorg-conf%E9%85%8D%E7%BD%AE"><span class="nav-number">3.2.</span> <span class="nav-text">xorg.conf配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E4%B8%80-%E7%9B%B4%E6%8E%A5%E9%85%8D%E7%BD%AExorg-conf%E6%96%87%E4%BB%B6"><span class="nav-number">3.2.1.</span> <span class="nav-text">方法一 直接配置xorg.conf文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E4%BA%8C-%E6%B7%BB%E5%8A%A0%E6%96%87%E4%BB%B6-etc-X11-xorg-conf-d-10-nvidia-drm-outputclass-conf%E6%8C%87%E5%AF%BC%E7%B3%BB%E7%BB%9F%E8%BF%9B%E8%A1%8C%E8%87%AA%E5%8A%A8%E9%85%8D%E7%BD%AE"><span class="nav-number">3.2.2.</span> <span class="nav-text">方法二 添加文件&#x2F;etc&#x2F;X11&#x2F;xorg.conf.d&#x2F;10-nvidia-drm-outputclass.conf指导系统进行自动配置</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8xrandr%E9%85%8D%E7%BD%AE%E5%8F%8C%E5%B1%8F"><span class="nav-number">3.3.</span> <span class="nav-text">使用xrandr配置双屏</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">4.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Liu Peiyuan"
+      src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/1639911209663.jpg">
+  <p class="site-author-name" itemprop="name">Liu Peiyuan</p>
+  <div class="site-description" itemprop="description">刘沛源的博客</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">46</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lpypl" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lpypl" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lpy.henu@gmail.com" title="E-Mail → mailto:lpy.henu@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://t.me/lpypl" title="Telegram → https:&#x2F;&#x2F;t.me&#x2F;lpypl" rel="noopener" target="_blank"><i class="fab fa-telegram fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Liu Peiyuan</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+      <span class="post-meta-item-text">站点总字数：</span>
+    <span title="站点总字数">67k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">2:02</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://lpypl.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "https://blog.lpypl.top/2021/01/16/Nvidia%E5%8F%8C%E6%98%BE%E5%8D%A1%E7%AC%94%E8%AE%B0%E6%9C%AC%E5%8F%8C%E5%B1%8F%E9%85%8D%E7%BD%AE/";
+    this.page.identifier = "2021/01/16/Nvidia双显卡笔记本双屏配置/";
+    this.page.title = "Nvidia双显卡笔记本双屏配置";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://lpypl.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

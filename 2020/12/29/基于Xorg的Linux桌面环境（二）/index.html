@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.lpypl.top","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"disqus","storage":true,"lazyload":false,"nav":{"disqus":{"text":"Load Disqus","order":-1},"gitalk":{"order":-2}},"activeClass":"disqus"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="概要在上一篇文章了解了X Window System的基本架构，现在来讨论如何使用。本文关注的是如何在本机启动基于X的桌面环境，以及如何配置使其自动启动，最后讨论了执行 X 命令所需的权限。 本文主要涉及这几个概念或程序。  xinit - X Window System initializer startx - initialize an X session Xsession - initial">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于Xorg的Linux桌面环境（二）">
+<meta property="og:url" content="https://blog.lpypl.top/2020/12/29/%E5%9F%BA%E4%BA%8EXorg%E7%9A%84Linux%E6%A1%8C%E9%9D%A2%E7%8E%AF%E5%A2%83%EF%BC%88%E4%BA%8C%EF%BC%89/index.html">
+<meta property="og:site_name" content="Yuan&#39;s blog">
+<meta property="og:description" content="概要在上一篇文章了解了X Window System的基本架构，现在来讨论如何使用。本文关注的是如何在本机启动基于X的桌面环境，以及如何配置使其自动启动，最后讨论了执行 X 命令所需的权限。 本文主要涉及这几个概念或程序。  xinit - X Window System initializer startx - initialize an X session Xsession - initial">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20201230080643.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20201231023816.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20201231125141.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20201231132607.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210101030017.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210101013817.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210101014401.png">
+<meta property="article:published_time" content="2020-12-29T14:00:00.000Z">
+<meta property="article:modified_time" content="2026-02-25T08:25:44.673Z">
+<meta property="article:author" content="Liu Peiyuan">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="X">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20201230080643.png">
+
+<link rel="canonical" href="https://blog.lpypl.top/2020/12/29/%E5%9F%BA%E4%BA%8EXorg%E7%9A%84Linux%E6%A1%8C%E9%9D%A2%E7%8E%AF%E5%A2%83%EF%BC%88%E4%BA%8C%EF%BC%89/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>基于Xorg的Linux桌面环境（二） | Yuan's blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-190455776-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-190455776-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Yuan's blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Yuan's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">刘沛源的博客</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-rss">
+
+    <a href="/atom.xml" rel="section"><i class="fa fa-rss fa-fw"></i>RSS</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.lpypl.top/2020/12/29/%E5%9F%BA%E4%BA%8EXorg%E7%9A%84Linux%E6%A1%8C%E9%9D%A2%E7%8E%AF%E5%A2%83%EF%BC%88%E4%BA%8C%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/1639911209663.jpg">
+      <meta itemprop="name" content="Liu Peiyuan">
+      <meta itemprop="description" content="刘沛源的博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Yuan's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          基于Xorg的Linux桌面环境（二）
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-12-29 22:00:00" itemprop="dateCreated datePublished" datetime="2020-12-29T22:00:00+08:00">2020-12-29</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2026-02-25 16:25:44" itemprop="dateModified" datetime="2026-02-25T16:25:44+08:00">2026-02-25</time>
+              </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus：</span>
+    
+    <a title="disqus" href="/2020/12/29/%E5%9F%BA%E4%BA%8EXorg%E7%9A%84Linux%E6%A1%8C%E9%9D%A2%E7%8E%AF%E5%A2%83%EF%BC%88%E4%BA%8C%EF%BC%89/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2020/12/29/基于Xorg的Linux桌面环境（二）/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>7.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>14 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="概要"><a href="#概要" class="headerlink" title="概要"></a>概要</h2><p>在上一篇文章了解了X Window System的基本架构，现在来讨论如何使用。<br>本文关注的是如何在本机启动基于X的桌面环境，以及如何配置使其自动启动，最后讨论了执行 <code>X</code> 命令所需的权限。</p>
+<p>本文主要涉及这几个概念或程序。</p>
+<ol>
+<li>xinit - X Window System initializer</li>
+<li>startx - initialize an X session</li>
+<li>Xsession - initialize X session</li>
+</ol>
+<h2 id="在本地启动X-Server和X-Client并连接"><a href="#在本地启动X-Server和X-Client并连接" class="headerlink" title="在本地启动X Server和X Client并连接"></a>在本地启动X Server和X Client并连接</h2><p>在上一篇文章讲了手动启动X Server，然后再启动X Client，使其连接到所创建X Server的方法。<br>但是使用那种操作方式虽然直观，但是一旦X Server启动成功，虚拟机显示器和其它外设便会由X Server接管，<br>也就无法在<strong>虚拟机本机</strong>同时完成X Server和X Client的启动。那么如何只使用一台机器完成操作呢？  </p>
+<blockquote>
+<p>也许使用对X使用vt参数可以借助虚拟终端完成本地启动？</p>
+<p>这个想法在我电脑的Ubuntu系统上是可行的，可以在启动 <code>X</code> 时通过 <code>vtN</code> 参数指定其所占用的虚拟终端，这样一来执行 <code>X</code> 之后还能通过 <code>Ctrl+Alt+FN</code> 切回原来的console/tty，在其中启动X Client，并连接至刚才启动的X Server。<br>但是在虚拟机中的Arch里面似乎在试图切换到其它tty的时候会死机，暂不清楚原因，也许跟视频驱动有关系。</p>
+</blockquote>
+<p>可以使用shell脚本完成。</p>
+<h3 id="使用SHELL脚本完成GUI启动"><a href="#使用SHELL脚本完成GUI启动" class="headerlink" title="使用SHELL脚本完成GUI启动"></a>使用SHELL脚本完成GUI启动</h3><p>可以创建如下脚本，使用bash执行。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># !/usr/bin/sh</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">export</span> DISPLAY=:0.0</span><br><span class="line"></span><br><span class="line"><span class="comment"># X Server</span></span><br><span class="line">X :0 &amp;</span><br><span class="line"></span><br><span class="line"><span class="comment"># sleep是为了等待X Server启动</span></span><br><span class="line"><span class="comment"># 否则有可能因为X Client试图连接到X Server失败而退出</span></span><br><span class="line"><span class="comment"># 导致X Server最终启动成功，却没有X Client</span></span><br><span class="line"><span class="built_in">sleep</span> 3</span><br><span class="line"></span><br><span class="line"><span class="comment"># X Client</span></span><br><span class="line">i3 &amp;</span><br></pre></td></tr></table></figure>
+<p>使用root权限执行脚本就可以看到i3桌面环境了，如果想要回到刚才的命令行界面，可以在i3桌面下调出xterm，执行<code>pkill Xorg</code>。</p>
+<details>
+<summary>之前由于未加sleep语句而导致的愚蠢错误</summary>
+<pre>
+<blockquote>
+<p><strong>破案了！！！在X Client前面加上一句 <code>sleep 3</code> 就能正常启动了，推测是因为X Server还没完全启动，xterm就尝试连接，发现失败，然后报错了，，，</strong><br><strong>之前犯的愚蠢错误，可以忽略</strong><br>虽然说X Client应该没有什么限制，但至少可以排除一个xterm，该程序似乎无法用超级用户权限执行（这么说应该不合适，因为随后进入i3桌面之后可以调出xterm，但是把脚本中i3换成xterm确实看不到它正常显示），也就是说如果把脚本中的i3换成xterm，看起来和只执行X是一样的效果，这一现象一度使我误以为X Server启动之后，后面的命令便无法执行了（显然这种猜测不合常理）。
+报错信息如下：<br><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20201230080643.png" alt="error"></p>
+</blockquote>
+</pre>
+</details>
+
+<h3 id="模拟非root用户登录"><a href="#模拟非root用户登录" class="headerlink" title="模拟非root用户登录"></a>模拟非root用户登录</h3><p>上面的脚本执行完毕会以root用户的身份启动X Client应用。这和平时所用的桌面环境行为并不一致，那么如何修改上述脚本从而以普通用户的身份启动i3桌面呢？可以像下面这样：  </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># !/usr/bin/sh</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># X Server</span></span><br><span class="line">X :0 &amp;</span><br><span class="line"></span><br><span class="line"><span class="comment"># sleep是为了等待X Server启动</span></span><br><span class="line"><span class="comment"># 否则有可能因为X Client试图连接到X Server失败而退出</span></span><br><span class="line"><span class="comment"># 导致X Server最终启动成功，却没有X Client</span></span><br><span class="line"><span class="built_in">sleep</span> 3</span><br><span class="line"></span><br><span class="line"><span class="comment"># X Client</span></span><br><span class="line"><span class="comment"># 需要设置 DISPLAY 变量</span></span><br><span class="line">su lpy -l -c <span class="string">&quot;DISPLAY=:0.0 i3 &amp;&quot;</span></span><br></pre></td></tr></table></figure>
+<p>该脚本与上面的不同之处仅在X Client上，借助 <code>su $USER -l -c ...</code> 来以普通用户的身份启动X Client即可。</p>
+<p>在这里使用 <code>-l</code> 参数是为了模拟<code>login</code>，避免当前root用户身份下的一些配置被传递给 i3 进程。<br>当时我遇到的情况是，由于环境变量<code>PWD=/root</code>被传递给了i3，我在i3中启动的xterm初始路径会是<code>/root</code>，尽管当时是以 <code>lpy</code> 的身份启动i3的。  </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">-, -l, --login</span><br><span class="line">       Start the shell as a login shell with an environment similar to a real lo‐</span><br><span class="line">       gin:</span><br><span class="line"></span><br><span class="line">          o      clears  all  the environment variables except TERM and variables</span><br><span class="line">                 specified by --whitelist-environment</span><br><span class="line"></span><br><span class="line">          o      initializes the environment variables HOME,  SHELL,  USER,  LOG‐</span><br><span class="line">                 NAME, and PATH</span><br><span class="line"></span><br><span class="line">          o      changes to the target user&#x27;s home directory</span><br><span class="line"></span><br><span class="line">          o      sets  argv[0]  of  the shell to &#x27;-&#x27; in order to make the shell a</span><br><span class="line">                 login shell</span><br></pre></td></tr></table></figure>
+<p>至此我们了解了利用脚本启动X Window System的方法。<br>这种方式还有个致命的缺陷，一旦一不小心退出了X Client，由于X Server还控制着显示器和其它外设，我们将无法进行其它操作。  </p>
+<p><strong>新的疑问：能否在脚本里面指定<code>vt_n</code>这样的参数将其运行在某个虚拟终端上，而不是像现在这样无法切换虚拟终端？</strong>  </p>
+<h2 id="xinit-和-startx"><a href="#xinit-和-startx" class="headerlink" title="xinit 和 startx"></a>xinit 和 startx</h2><p>自己完全控制X Server 和 X Client的启动及连接并不方便，现在介绍另外两个用于启动X Window System的工具。  </p>
+<h3 id="xinit"><a href="#xinit" class="headerlink" title="xinit"></a>xinit</h3><p><a target="_blank" rel="noopener" href="https://www.x.org/releases/X11R7.6/doc/man/man1/xinit.1.xhtml">xinit</a> 是X Window System的初始化程序。</p>
+<p>该程序用于在不使用Diaplay Manager（例如xdm）的系统中启动X Server和第一个X Client程序，当其启动的第一个X Client程序退出之后，xinit将会关闭X Server，然后退出。</p>
+<p>从console执行下面的命令可以启动i3，并且一旦i3退出，相应X Server也会退出，可以回到console。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo xinit i3</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>官方文档似乎提到了对出现在xinit参数中的程序名格式的限制，但这里并没有遵守，也可以正常执行  </p>
+<p>An  alternate client and/or server may be specified on the command line.  The de‐<br>       sired client program and its arguments should be given as the first command  line<br>       arguments to xinit.  To specify a particular server command line, append a double<br>       dash (—) to the xinit command line (after any client and arguments) followed  by<br>       the desired server command.</p>
+<p>Both  the client program name and the server program name must begin with a slash<br>       (/) or a period (.).  Otherwise, they are treated as an arguments to be  appended<br>       to  their respective startup lines.  This makes it possible to add arguments (for<br>       example, foreground and background colors) without having  to  retype  the  whole<br>       command line.</p>
+</blockquote>
+<p>具体用法参考<a target="_blank" rel="noopener" href="https://www.x.org/releases/X11R7.6/doc/man/man1/xinit.1.xhtml">官方文档</a>。</p>
+<p>关于xinit，很重要的一点是要理解它的行为，它会启动两个程序，一个叫做作 <code>A</code>(称为Client)，另一个叫作<code>B</code>（称为Server），一旦它检测到 <code>A</code> 进程结束，它就会终止 <code>B</code> 进程。<br>也许可以这么说（我瞎猜的），xinit程序本身并不知道它所启动的到底是两个什么程序，它所做的事情仅仅是等待 <code>A</code> 完成，然后终止 <code>B</code>。只要按照约定将 <code>X Client</code> 程序传递给它作为 <code>A</code>，将 <code>X Server</code> 传递给它作为 <code>B</code>，就能实现 <code>X Client</code> 进程结束时自动终止 <code>X Server</code> 的效果。<strong>也许可以尝试使用SHELL脚本模拟这个过程。</strong>  </p>
+<p>理解了这个过程，就可以讨论 <code>xinit</code> 所接受的<code>程序参数</code>类型了。既然只要可以运行为一个进程就可以，也就不是必须传递给它二进制程序了，SHELL脚本也是可以的，因为可以由xinit创建一个sh进程执行脚本，然后将此sh进程作为所谓的的 <code>Client</code> 进程，等待它结束然后去终止 <code>Server</code>进程，同样的，所谓的 <code>Server</code> 进程也可以是shell脚本。  </p>
+<p>在实际使用中，几乎总是使用脚本作为<code>程序参数</code>传递给xinit，并在 <code>Server</code> 脚本的最后使用 <code>exec</code> 命令启动<code>X Server</code>，这样一来就能将此sh进程转变成 <code>X Server</code> 进程，在 <code>Client</code> 脚本的最后使用 <code>exec</code> 命令启动 <code>X Client</code>，然后xinit按照其运行逻辑等待 <code>Client</code> 进程结束并终止 <code>Server</code> 即可。</p>
+<p>而且，如何没有给xinit提供client和server参数，xinit会使用缺省参数，它会将 <code>/etc/X11/xinit/xserverrc</code> 作为 <code>Server</code>，将 <code>/etx/X11/xinit/xinitrc</code> 作为 <code>Client</code>。</p>
+<p>下面的就是 <code>/etc/X11/xinit/xserverrc</code> 的内容，其实它就做了一件事，就是使用 <code>exec</code> 在sh进程空间运行 <code>X</code>。注意命令最后的 <code>$@</code>，意思是接收所有传递给该脚本的的命令行参数并传递给 <code>/usr/bin/X</code>。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"><span class="built_in">exec</span> /usr/bin/X -nolisten tcp <span class="string">&quot;<span class="variable">$@</span>&quot;</span></span><br></pre></td></tr></table></figure>
+<h3 id="startx"><a href="#startx" class="headerlink" title="startx"></a>startx</h3><h4 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h4><p><code>startx</code> 是 <code>xinit</code> 的一个前端，是一个shell脚本，位于 <code>/usr/bin/startx</code>。  </p>
+<p>既然已经有了<code>xinit</code>，为什么还需要 <code>startx</code>呢？<br>因为 <code>xinit</code> 的缺省配置并不友好，它的缺省 <code>DISPLAY</code> 总是 <code>:0</code>，默认情况不会使用 <code>vt_N</code> 参数使用虚拟终端，它仅仅提供了最基本的功能，几乎需要指明各种参数。  </p>
+<p>而 <code>startx</code> 所做的事情就是在 <code>xinit</code> 的基础上按照其定义的策略确定一组恰当的默认配置参数，然后用这组参数调用 <code>xinit</code> 从而完成启动，从而减轻用户使用负担。它负责确定的配置，包括 <code>DISPLAY</code> 、 <code>vt_N</code>、<code>client</code>、<code>client_options</code>、<code>server</code>、<code>server_options</code>等。除了负责确定一组合适的xinit调用参数，它还会进行一些 <code>X Window System</code> 鉴权相关操作，比如设置 <code>xhost</code>，<code>xauth</code>等。</p>
+<p><code>startx</code> 的参数格式也与 <code>xinit</code> 完全相同，可以像调用 <code>xinit</code> 那样直接调用 <code>startx</code>。下面的命令就可以在第8个虚拟终端上启动X Server和i3wm。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">startx i3 -- :0 vt8</span><br></pre></td></tr></table></figure>
+<h4 id="配置文件"><a href="#配置文件" class="headerlink" title="配置文件"></a>配置文件</h4><p>配置文件其实就是要传递给 xinit 的 Client 和 Server 脚本。在 commandline options 中提供的 Server 和  Client 优先级最高，如果用户没有提供 Client 和 Server 参数，startx 就会按照其约定的规则搜索确定要使用的 Client 和 Server 脚本。  </p>
+<p>startx 相比 xinit 增加了用户配置文件的概念，会优先搜索用户配置 <code>~/.xinitrc</code> 作为 xinit 的 client，搜索 <code>~/.xserverrc</code> 作为 xinit 的 server，如果用户配置不存在，才会继续搜索系统配置文件。</p>
+<p>具体配置文件路径及匹配规则如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">To determine the client to run, startx looks for the following files, in order:</span><br><span class="line"></span><br><span class="line">              $(HOME)/.startxrc</span><br><span class="line"></span><br><span class="line">              /usr/lib/x86_64-linux-gnu/sys.startxrc</span><br><span class="line"></span><br><span class="line">              $(HOME)/.xinitrc</span><br><span class="line"></span><br><span class="line">              /etc/X11/xinit/xinitrc</span><br><span class="line"></span><br><span class="line">       If  command line client options are given, they override this behavior and revert</span><br><span class="line">       to the xinit(1) behavior.  To determine the server to run, startx first looks for</span><br><span class="line">       a  file called .xserverrc in the user&#x27;s home directory.  If that is not found, it</span><br><span class="line">       uses the file xserverrc in the xinit library directory.  If command  line  server</span><br><span class="line">       options  are given, they override this behavior and revert to the xinit(1) behav‐</span><br><span class="line">       ior.  Users rarely need to provide a .xserverrc file.  See  the  xinit(1)  manual</span><br><span class="line">       page for more details on the arguments.</span><br><span class="line"></span><br><span class="line">       The  system-wide  xinitrc and xserverrc files are found in the /etc/X11/xinit di‐</span><br><span class="line">       rectory.</span><br></pre></td></tr></table></figure>
+<h4 id="基于Debian的系统-XSession文件"><a href="#基于Debian的系统-XSession文件" class="headerlink" title="基于Debian的系统-XSession文件"></a>基于Debian的系统-XSession文件</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Note that in the Debian system, what many people traditionally put in the  .xini‐</span><br><span class="line">       trc  file  should go in .xsession instead; this permits the same X environment to</span><br><span class="line">       be presented whether startx, xdm, or xinit is used to start the  X  session.  All</span><br><span class="line">       discussion  of the .xinitrc file in the xinit(1) manual page applies equally well</span><br><span class="line">       to .xsession.  Keep in mind that .xinitrc is used only by xinit(1) and completely</span><br><span class="line">       ignored by xdm(1).</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>使用 <code>man Xsession</code> 命令进一步了解，这是Debian对<a target="_blank" rel="noopener" href="https://wiki.debian.org/Xsession">Xsession</a>的介绍。</p>
+<p>在我的Ubuntu系统上，<code>/etc/X11/xinit/xinitrc</code> 只是简单地执行了 <code>/etc/X11/Xsession</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">#!/bin/sh</span><br><span class="line"></span><br><span class="line"># /etc/X11/xinit/xinitrc</span><br><span class="line">#</span><br><span class="line"># global xinitrc file, used by all X sessions started by xinit (startx)</span><br><span class="line"></span><br><span class="line"># invoke global X session script</span><br><span class="line">. /etc/X11/Xsession</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="startx脚本分析"><a href="#startx脚本分析" class="headerlink" title="startx脚本分析"></a>startx脚本分析</h2><p>如果需要在console启动X Windows System，一般会使用 <code>startx</code>， 因此理解 <code>startx</code> 的执行过程有助于更好地理解其配置方法。下面是我对startx脚本的简单注释，主要是指出了一些我之前未曾接触过的shell语法。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># This is just a sample implementation of a slightly less primitive</span></span><br><span class="line"><span class="comment"># interface than xinit. It looks for user .xinitrc and .xserverrc</span></span><br><span class="line"><span class="comment"># files, then system xinitrc and xserverrc files, else lets xinit choose</span></span><br><span class="line"><span class="comment"># its default. The system xinitrc should probably do things like check</span></span><br><span class="line"><span class="comment"># for .Xresources files and merge them in, start up a window manager,</span></span><br><span class="line"><span class="comment"># and pop a clock and several xterms.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Site administrators are STRONGLY urged to write nicer versions.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">unset</span> DBUS_SESSION_BUS_ADDRESS</span><br><span class="line"><span class="built_in">unset</span> SESSION_MANAGER</span><br><span class="line">userclientrc=<span class="variable">$HOME</span>/.xinitrc</span><br><span class="line">sysclientrc=/etc/X11/xinit/xinitrc</span><br><span class="line"></span><br><span class="line">userserverrc=<span class="variable">$HOME</span>/.xserverrc</span><br><span class="line">sysserverrc=/etc/X11/xinit/xserverrc</span><br><span class="line">defaultclient=/usr/bin/xterm</span><br><span class="line">defaultserver=/usr/bin/X</span><br><span class="line">defaultclientargs=<span class="string">&quot;&quot;</span></span><br><span class="line">defaultserverargs=<span class="string">&quot;&quot;</span></span><br><span class="line">defaultdisplay=<span class="string">&quot;&quot;</span></span><br><span class="line">clientargs=<span class="string">&quot;&quot;</span></span><br><span class="line">serverargs=<span class="string">&quot;&quot;</span></span><br><span class="line">vtarg=<span class="string">&quot;&quot;</span></span><br><span class="line">enable_xauth=1</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># Automatically determine an unused $DISPLAY</span></span><br><span class="line"><span class="comment"># 自动找一个可用的 $DISPLAY</span></span><br><span class="line"><span class="comment">#（如果用户没有通过命令行界面指定 DISPLAY，就会使用这个参数）</span></span><br><span class="line">d=0</span><br><span class="line"><span class="keyword">while</span> <span class="literal">true</span> ; <span class="keyword">do</span></span><br><span class="line">    [ -e <span class="string">&quot;/tmp/.X<span class="variable">$d</span>-lock&quot;</span> -o -S <span class="string">&quot;/tmp/.X11-unix/X<span class="variable">$d</span>&quot;</span> ] || <span class="built_in">break</span></span><br><span class="line">    d=$((<span class="variable">$d</span> + <span class="number">1</span>))</span><br><span class="line"><span class="keyword">done</span></span><br><span class="line">defaultdisplay=<span class="string">&quot;:<span class="variable">$d</span>&quot;</span></span><br><span class="line"><span class="built_in">unset</span> d</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 这一部分主要解析传递给 startx 的命令行参数，之后会传递给 xinit</span></span><br><span class="line">whoseargs=<span class="string">&quot;client&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 这个判断条件的意思是，$1不为空</span></span><br><span class="line"><span class="comment"># 看起来有点奇怪，可能是早期shell的限制导致不得不这么写吧</span></span><br><span class="line"><span class="keyword">while</span> [ x<span class="string">&quot;<span class="variable">$1</span>&quot;</span> != x ]; <span class="keyword">do</span></span><br><span class="line">    <span class="keyword">case</span> <span class="string">&quot;<span class="variable">$1</span>&quot;</span> <span class="keyword">in</span></span><br><span class="line">    <span class="comment"># &#x27;&#x27; required to prevent cpp from treating &quot;/*&quot; as a C comment.</span></span><br><span class="line">    /<span class="string">&#x27;&#x27;</span>*|\./<span class="string">&#x27;&#x27;</span>*) <span class="comment"># 匹配一个看起来像是路径的东西</span></span><br><span class="line">    <span class="comment"># 这个 PATTERN 可能是专门用来匹配 client 或 server 程序的</span></span><br><span class="line">    <span class="comment"># 这么奇怪可能与 xinit 对程序名这个参数的限制有关系</span></span><br><span class="line">    <span class="comment"># 似乎要求必须以 / 或 . 开头</span></span><br><span class="line">    <span class="comment"># 但是 xinit i3 又能正常执行启动i3桌面，又如何解释呢？</span></span><br><span class="line">    <span class="comment"># xinit 文档里是这么说的</span></span><br><span class="line">    <span class="comment"># An  alternate client and/or server may be specified on the command line.  The de‐</span></span><br><span class="line">    <span class="comment">#   sired client program and its arguments should be given as the first command  line</span></span><br><span class="line">    <span class="comment">#   arguments to xinit.  To specify a particular server command line, append a double</span></span><br><span class="line">    <span class="comment">#   dash (--) to the xinit command line (after any client and arguments) followed  by</span></span><br><span class="line">    <span class="comment">#   the desired server command.</span></span><br><span class="line">    <span class="comment">#</span></span><br><span class="line">    <span class="comment"># Both  the client program name and the server program name must begin with a slash</span></span><br><span class="line">    <span class="comment">#   (/) or a period (.).  Otherwise, they are treated as an arguments to be  appended</span></span><br><span class="line">    <span class="comment">#   to  their respective startup lines.  This makes it possible to add arguments (for</span></span><br><span class="line">    <span class="comment">#   example, foreground and background colors) without having  to  retype  the  whole</span></span><br><span class="line">    <span class="comment">#   command line.</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 当前处理的是关于client的参数（--分隔符之前）</span></span><br><span class="line"> <span class="keyword">if</span> [ <span class="string">&quot;<span class="variable">$whoseargs</span>&quot;</span> = <span class="string">&quot;client&quot;</span> ]; <span class="keyword">then</span> </span><br><span class="line">     <span class="comment"># 如何还未设置client及其options（按照约定client路径应该作为第一个参数）</span></span><br><span class="line">     <span class="keyword">if</span> [ x<span class="string">&quot;<span class="variable">$client</span>&quot;</span> = x ] &amp;&amp; [ x<span class="string">&quot;<span class="variable">$clientargs</span>&quot;</span> = x ]; <span class="keyword">then</span> </span><br><span class="line">  client=<span class="string">&quot;<span class="variable">$1</span>&quot;</span> <span class="comment"># 设置 client</span></span><br><span class="line">     <span class="keyword">else</span></span><br><span class="line">  clientargs=<span class="string">&quot;<span class="variable">$clientargs</span> <span class="variable">$1</span>&quot;</span> <span class="comment"># 设置 client options</span></span><br><span class="line">     <span class="keyword">fi</span></span><br><span class="line"> <span class="keyword">else</span></span><br><span class="line">     <span class="comment"># 当前处理的是关于server的参数（--分隔符之前）</span></span><br><span class="line">     <span class="keyword">if</span> [ x<span class="string">&quot;<span class="variable">$server</span>&quot;</span> = x ] &amp;&amp; [ x<span class="string">&quot;<span class="variable">$serverargs</span>&quot;</span> = x ]; <span class="keyword">then</span></span><br><span class="line">  server=<span class="string">&quot;<span class="variable">$1</span>&quot;</span> <span class="comment"># 设置 server</span></span><br><span class="line">     <span class="keyword">else</span></span><br><span class="line">  serverargs=<span class="string">&quot;<span class="variable">$serverargs</span> <span class="variable">$1</span>&quot;</span> <span class="comment"># 设置 server options</span></span><br><span class="line">     <span class="keyword">fi</span></span><br><span class="line"> <span class="keyword">fi</span></span><br><span class="line"> ;;</span><br><span class="line"></span><br><span class="line">   <span class="comment"># 遇到这个分隔符，表明接下来的是 server 相关参数</span></span><br><span class="line">    --)</span><br><span class="line"> whoseargs=<span class="string">&quot;server&quot;</span></span><br><span class="line"> ;;</span><br><span class="line">    *)</span><br><span class="line"> <span class="keyword">if</span> [ <span class="string">&quot;<span class="variable">$whoseargs</span>&quot;</span> = <span class="string">&quot;client&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">     clientargs=<span class="string">&quot;<span class="variable">$clientargs</span> <span class="variable">$1</span>&quot;</span></span><br><span class="line"> <span class="keyword">else</span></span><br><span class="line">     <span class="comment"># display must be the FIRST server argument</span></span><br><span class="line">     <span class="keyword">if</span> [ x<span class="string">&quot;<span class="variable">$serverargs</span>&quot;</span> = x ] &amp;&amp; \</span><br><span class="line">   <span class="built_in">expr</span> <span class="string">&quot;<span class="variable">$1</span>&quot;</span> : <span class="string">&#x27;:[0-9][0-9]*$&#x27;</span> &gt; /dev/null 2&gt;&amp;1; <span class="keyword">then</span></span><br><span class="line">  display=<span class="string">&quot;<span class="variable">$1</span>&quot;</span></span><br><span class="line">     <span class="keyword">else</span></span><br><span class="line">  serverargs=<span class="string">&quot;<span class="variable">$serverargs</span> <span class="variable">$1</span>&quot;</span></span><br><span class="line">     <span class="keyword">fi</span></span><br><span class="line"> <span class="keyword">fi</span></span><br><span class="line"> ;;</span><br><span class="line">    <span class="keyword">esac</span></span><br><span class="line">    <span class="built_in">shift</span></span><br><span class="line"><span class="keyword">done</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># process client arguments</span></span><br><span class="line"><span class="comment"># 如果未通过commandline options确定client，就根据顺序选定一个配置脚本作为client </span></span><br><span class="line"><span class="keyword">if</span> [ x<span class="string">&quot;<span class="variable">$client</span>&quot;</span> = x ]; <span class="keyword">then</span></span><br><span class="line">    client=<span class="variable">$defaultclient</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># For compatibility reasons, only use startxrc if there were no client command line arguments</span></span><br><span class="line">    <span class="keyword">if</span> [ x<span class="string">&quot;<span class="variable">$clientargs</span>&quot;</span> = x ]; <span class="keyword">then</span></span><br><span class="line">        <span class="keyword">if</span> [ -f <span class="string">&quot;<span class="variable">$userclientrc</span>&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">            client=<span class="variable">$userclientrc</span></span><br><span class="line">        <span class="keyword">elif</span> [ -f <span class="string">&quot;<span class="variable">$sysclientrc</span>&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">            client=<span class="variable">$sysclientrc</span></span><br><span class="line">        <span class="keyword">fi</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># if no client arguments, use defaults</span></span><br><span class="line"><span class="keyword">if</span> [ x<span class="string">&quot;<span class="variable">$clientargs</span>&quot;</span> = x ]; <span class="keyword">then</span></span><br><span class="line">    clientargs=<span class="variable">$defaultclientargs</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 如果未通过commandline options确定server，就根据顺序选定一个配置脚本作为server </span></span><br><span class="line"><span class="comment"># process server arguments</span></span><br><span class="line"><span class="keyword">if</span> [ x<span class="string">&quot;<span class="variable">$server</span>&quot;</span> = x ]; <span class="keyword">then</span></span><br><span class="line">    server=<span class="variable">$defaultserver</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment"># When starting the defaultserver start X on the current tty to avoid</span></span><br><span class="line">    <span class="comment"># the startx session being seen as inactive:</span></span><br><span class="line">    <span class="comment"># &quot;https://bugzilla.redhat.com/show_bug.cgi?id=806491&quot;</span></span><br><span class="line">    <span class="built_in">tty</span>=$(<span class="built_in">tty</span>)</span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">expr</span> <span class="string">&quot;<span class="variable">$tty</span>&quot;</span> : <span class="string">&#x27;/dev/tty[0-9][0-9]*$&#x27;</span> &gt; /dev/null; <span class="keyword">then</span></span><br><span class="line">        tty_num=$(<span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$tty</span>&quot;</span> | grep -oE <span class="string">&#x27;[0-9]+$&#x27;</span>)</span><br><span class="line">        vtarg=<span class="string">&quot;vt<span class="variable">$tty_num</span> -keeptty&quot;</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment"># For compatibility reasons, only use xserverrc if there were no server command line arguments</span></span><br><span class="line">    <span class="keyword">if</span> [ x<span class="string">&quot;<span class="variable">$serverargs</span>&quot;</span> = x -a x<span class="string">&quot;<span class="variable">$display</span>&quot;</span> = x ]; <span class="keyword">then</span></span><br><span class="line"> <span class="keyword">if</span> [ -f <span class="string">&quot;<span class="variable">$userserverrc</span>&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">     server=<span class="variable">$userserverrc</span></span><br><span class="line"> <span class="keyword">elif</span> [ -f <span class="string">&quot;<span class="variable">$sysserverrc</span>&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">     server=<span class="variable">$sysserverrc</span></span><br><span class="line"> <span class="keyword">fi</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># if no server arguments, use defaults</span></span><br><span class="line"><span class="keyword">if</span> [ x<span class="string">&quot;<span class="variable">$serverargs</span>&quot;</span> = x ]; <span class="keyword">then</span></span><br><span class="line">    serverargs=<span class="variable">$defaultserverargs</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置vt参数（虚拟终端编号）</span></span><br><span class="line"><span class="comment"># if no vt is specified add vtarg (which may be empty)</span></span><br><span class="line">have_vtarg=<span class="string">&quot;no&quot;</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="variable">$serverargs</span>; <span class="keyword">do</span></span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">expr</span> <span class="string">&quot;<span class="variable">$i</span>&quot;</span> : <span class="string">&#x27;vt[0-9][0-9]*$&#x27;</span> &gt; /dev/null; <span class="keyword">then</span></span><br><span class="line">        have_vtarg=<span class="string">&quot;yes&quot;</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line"><span class="keyword">done</span></span><br><span class="line"><span class="keyword">if</span> [ <span class="string">&quot;<span class="variable">$have_vtarg</span>&quot;</span> = <span class="string">&quot;no&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">    serverargs=<span class="string">&quot;<span class="variable">$serverargs</span> <span class="variable">$vtarg</span>&quot;</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># if no display, use default</span></span><br><span class="line"><span class="keyword">if</span> [ x<span class="string">&quot;<span class="variable">$display</span>&quot;</span> = x ]; <span class="keyword">then</span></span><br><span class="line">    display=<span class="variable">$defaultdisplay</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 这一部分控制身份验证相关的内容，还没仔细看</span></span><br><span class="line"><span class="keyword">if</span> [ x<span class="string">&quot;<span class="variable">$enable_xauth</span>&quot;</span> = x1 ] ; <span class="keyword">then</span></span><br><span class="line">    <span class="keyword">if</span> [ x<span class="string">&quot;<span class="variable">$XAUTHORITY</span>&quot;</span> = x ]; <span class="keyword">then</span></span><br><span class="line">        XAUTHORITY=<span class="variable">$HOME</span>/.Xauthority</span><br><span class="line">        <span class="built_in">export</span> XAUTHORITY</span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line">    removelist=</span><br><span class="line"></span><br><span class="line">    <span class="comment"># set up default Xauth info for this machine</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># check for GNU hostname</span></span><br><span class="line">    <span class="keyword">if</span> hostname --version &gt; /dev/null 2&gt;&amp;1; <span class="keyword">then</span></span><br><span class="line">        <span class="keyword">if</span> [ -z <span class="string">&quot;`hostname --version 2&gt;&amp;1 | grep GNU`&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">            hostname=`hostname -f`</span><br><span class="line">        <span class="keyword">fi</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> [ -z <span class="string">&quot;<span class="variable">$hostname</span>&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">        hostname=`hostname`</span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line">    authdisplay=<span class="variable">$&#123;display:-:0&#125;</span></span><br><span class="line"></span><br><span class="line">    mcookie=`/usr/bin/mcookie`</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">test</span> x<span class="string">&quot;<span class="variable">$mcookie</span>&quot;</span> = x; <span class="keyword">then</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="string">&quot;Couldn&#x27;t create cookie&quot;</span></span><br><span class="line">        <span class="built_in">exit</span> 1</span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line">    dummy=0</span><br><span class="line"></span><br><span class="line">    <span class="comment"># create a file with auth information for the server. &#x27;:0&#x27; is a dummy.</span></span><br><span class="line">    xserverauthfile=`<span class="built_in">mktemp</span> --tmpdir serverauth.XXXXXXXXXX`</span><br><span class="line">    <span class="built_in">trap</span> <span class="string">&quot;rm -f &#x27;<span class="variable">$xserverauthfile</span>&#x27;&quot;</span> HUP INT QUIT ILL TRAP KILL BUS TERM</span><br><span class="line">    xauth -q -f <span class="string">&quot;<span class="variable">$xserverauthfile</span>&quot;</span> &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">add :$dummy . $mcookie</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    serverargs=<span class="variable">$&#123;serverargs&#125;</span><span class="string">&quot; -auth &quot;</span><span class="variable">$&#123;xserverauthfile&#125;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment"># now add the same credentials to the client authority file</span></span><br><span class="line">    <span class="comment"># if &#x27;$displayname&#x27; already exists do not overwrite it as another</span></span><br><span class="line">    <span class="comment"># server may need it. Add them to the &#x27;$xserverauthfile&#x27; instead.</span></span><br><span class="line">    <span class="keyword">for</span> displayname <span class="keyword">in</span> <span class="variable">$authdisplay</span> $hostname<span class="variable">$authdisplay</span>; <span class="keyword">do</span></span><br><span class="line">        authcookie=`xauth list <span class="string">&quot;<span class="variable">$displayname</span>&quot;</span> \</span><br><span class="line">        | sed -n <span class="string">&quot;s/.*<span class="variable">$displayname</span>[[:space:]*].*[[:space:]*]//p&quot;</span>` 2&gt;/dev/null;</span><br><span class="line">        <span class="keyword">if</span> [ <span class="string">&quot;z<span class="variable">$&#123;authcookie&#125;</span>&quot;</span> = <span class="string">&quot;z&quot;</span> ] ; <span class="keyword">then</span></span><br><span class="line">            xauth -q &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">add $displayname . $mcookie</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">        removelist=<span class="string">&quot;<span class="variable">$displayname</span> <span class="variable">$removelist</span>&quot;</span></span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">            dummy=$((<span class="variable">$dummy</span>+<span class="number">1</span>));</span><br><span class="line">            xauth -q -f <span class="string">&quot;<span class="variable">$xserverauthfile</span>&quot;</span> &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">add :$dummy . $authcookie</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line">        <span class="keyword">fi</span></span><br><span class="line">    <span class="keyword">done</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动！</span></span><br><span class="line">xinit <span class="string">&quot;<span class="variable">$client</span>&quot;</span> <span class="variable">$clientargs</span> -- <span class="string">&quot;<span class="variable">$server</span>&quot;</span> <span class="variable">$display</span> <span class="variable">$serverargs</span></span><br><span class="line"></span><br><span class="line">retval=$?</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ x<span class="string">&quot;<span class="variable">$enable_xauth</span>&quot;</span> = x1 ] ; <span class="keyword">then</span></span><br><span class="line">    <span class="keyword">if</span> [ x<span class="string">&quot;<span class="variable">$removelist</span>&quot;</span> != x ]; <span class="keyword">then</span></span><br><span class="line">        xauth remove <span class="variable">$removelist</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line">    <span class="keyword">if</span> [ x<span class="string">&quot;<span class="variable">$xserverauthfile</span>&quot;</span> != x ]; <span class="keyword">then</span></span><br><span class="line">        <span class="built_in">rm</span> -f <span class="string">&quot;<span class="variable">$xserverauthfile</span>&quot;</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="built_in">command</span> -v deallocvt &gt; /dev/null 2&gt;&amp;1; <span class="keyword">then</span></span><br><span class="line">    deallocvt</span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">exit</span> <span class="variable">$retval</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="Ubuntu默认配置下，Gnome是如何被启动的"><a href="#Ubuntu默认配置下，Gnome是如何被启动的" class="headerlink" title="Ubuntu默认配置下，Gnome是如何被启动的"></a>Ubuntu默认配置下，Gnome是如何被启动的</h2><p>经过查看，我的Ubuntu系统上并不存在 <code>~/.xinitrc</code>，~<code>/.xsession</code> 等文件，因此启动Gnone这样的设定应该是某个系统配置文件所为，根据前面所说，在Debian系列系统上 <code>/etc/X11/xinit/xinitrc</code> 本身并无作用，只是在其中执行了 <code>. /etc/X11/Xsession</code>，因此推测应该是 <code>Xsession</code> 部分的某个系统配置文件所为。  </p>
+<p>下面这段文档讲了Xsession的一个执行环节，其中涉及多个配置文件：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">/etc/X11/Xsession.d/50x11-common_determine-startup</span><br><span class="line">              Determine  startup  program.   The  X  client to launch as the controlling</span><br><span class="line">              process (the one that, upon exiting, causes the X server to exit as  well)</span><br><span class="line">              is  determined  next.   If a program or failsafe argument was given and is</span><br><span class="line">              allowed (see above), it is used as the controlling process.  Otherwise, if</span><br><span class="line">              the   line   ‘allow-user-xsession’   is  present  in  Xsession.options,  a</span><br><span class="line">              user-specified session program or script is used.  In the latter case, two</span><br><span class="line">              historically  popular  names  for user X session scripts are searched for:</span><br><span class="line">              $HOME/.xsession and $HOME/.Xsession (note the difference  in  case).   The</span><br><span class="line">              first one found is used.  If the script is not executable, it is marked to</span><br><span class="line">              be executed with the Bourne shell interpreter, sh.  Finally,  if  none  of</span><br><span class="line">              the   above   succeeds,   the   following   programs   are  searched  for:</span><br><span class="line">              /usr/bin/x-session-manager, /usr/bin/x-window-manager, and /usr/bin/x-ter‐</span><br><span class="line">              minal-emulator.  The first one found is used.  If none are found, Xsession</span><br><span class="line">              aborts with an error.</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>由于我的用户目录没有Xsession相关配置，所以重点关注系统配置文件。  </p>
+<p>上面文档提到的第一个系统配置文件 <code>/usr/bin/x-session-manager</code> 是个多级符号链接<br><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20201231023816.png" alt="/usr/bin/x-session-manager"></p>
+<p>内容如下，可以看到其中有对 <code>gnome-session-binary</code> 的调用，Gnome的启动应该与此脚本有关。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ <span class="string">&quot;x<span class="variable">$XDG_SESSION_TYPE</span>&quot;</span> = <span class="string">&quot;xwayland&quot;</span> ] &amp;&amp;</span><br><span class="line">   [ <span class="string">&quot;x<span class="variable">$XDG_SESSION_CLASS</span>&quot;</span> != <span class="string">&quot;xgreeter&quot;</span> ] &amp;&amp;</span><br><span class="line">   [  -n <span class="string">&quot;<span class="variable">$SHELL</span>&quot;</span> ] &amp;&amp;</span><br><span class="line">   grep -q <span class="string">&quot;<span class="variable">$SHELL</span>&quot;</span> /etc/shells &amp;&amp;</span><br><span class="line">   ! (<span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$SHELL</span>&quot;</span> | grep -q <span class="string">&quot;false&quot;</span>) &amp;&amp;</span><br><span class="line">   ! (<span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$SHELL</span>&quot;</span> | grep -q <span class="string">&quot;nologin&quot;</span>); <span class="keyword">then</span></span><br><span class="line">  <span class="keyword">if</span> [ <span class="string">&quot;<span class="variable">$1</span>&quot;</span> != <span class="string">&#x27;-l&#x27;</span> ]; <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">exec</span> bash -c <span class="string">&quot;exec -l &#x27;<span class="variable">$SHELL</span>&#x27; -c &#x27;<span class="variable">$0</span> -l $*&#x27;&quot;</span></span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">    <span class="built_in">shift</span></span><br><span class="line">  <span class="keyword">fi</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#SETTING=$(G_MESSAGES_DEBUG=&#x27;&#x27; gsettings get org.gnome.system.locale region)</span></span><br><span class="line"><span class="comment">#REGION=$&#123;SETTING#\&#x27;&#125;</span></span><br><span class="line"><span class="comment">#REGION=$&#123;REGION%\&#x27;&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ -n <span class="string">&quot;<span class="variable">$REGION</span>&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">  <span class="built_in">unset</span> LC_TIME LC_NUMERIC LC_MONETARY LC_MEASUREMENT LC_PAPER</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> [ <span class="string">&quot;<span class="variable">$LANG</span>&quot;</span> != <span class="string">&quot;<span class="variable">$REGION</span>&quot;</span> ] ; <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">export</span> LC_TIME=<span class="variable">$REGION</span></span><br><span class="line">    <span class="built_in">export</span> LC_NUMERIC=<span class="variable">$REGION</span></span><br><span class="line">    <span class="built_in">export</span> LC_MONETARY=<span class="variable">$REGION</span></span><br><span class="line">    <span class="built_in">export</span> LC_MEASUREMENT=<span class="variable">$REGION</span></span><br><span class="line">    <span class="built_in">export</span> LC_PAPER=<span class="variable">$REGION</span></span><br><span class="line">  <span class="keyword">fi</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ -d <span class="string">&quot;<span class="variable">$&#123;XDG_RUNTIME_DIR&#125;</span>/systemd&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">  <span class="built_in">exec</span> /usr/libexec/gnome-session-binary --systemd <span class="string">&quot;<span class="variable">$@</span>&quot;</span></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">  <span class="built_in">exec</span> /usr/libexec/gnome-session-binary --<span class="built_in">builtin</span> <span class="string">&quot;<span class="variable">$@</span>&quot;</span></span><br><span class="line"><span class="keyword">fi</span></span><br></pre></td></tr></table></figure>
+<h3 id="具体启动路径推测"><a href="#具体启动路径推测" class="headerlink" title="具体启动路径推测"></a>具体启动路径推测</h3><p>只考虑在 multi-user 模式下，在 console 执行 startx 手动启动 GUI 的过程。<br>我的 Ubuntu 系统的情况是，/home/lpy 里面没有任何 .xinitrc/.xsession/.xserverrc 等X Window System 的用户配置文件。  </p>
+<p>具体启动步骤可能是这样的：</p>
+<ol>
+<li>用户执行 startx</li>
+<li>startx 脚本根据文档所述规则，寻找用户配置失败</li>
+<li>startx 确定使用 <code>/etc/X11/xinit/xinitrc</code> 作为 <code>client</code>，使用 <code>/etc/X11/xinit/xserverrc</code> 作为 <code>Server</code></li>
+<li>startx 调用 <code>xinit /etc/X11/xinit/xinitrc [options...] -- /etc/X11/xinit/xserverrc [options...]</code> 启动 xinit</li>
+<li>xinit 启动一个shell进程执行 <code>/etc/X11/xinit/xserverrc</code>，该shell进程作为 Server，脚本执行过程中使用 <code>exec X ...</code>在shell进程空间内执行<code>X Server</code>，此后原shell进程本质上已经变成 <code>X Server</code> 进程了</li>
+<li>xinit 启动另一个shell进程执行 <code>/etc/X11/xinit/xinitrc</code>，该shell进程作为 Client，脚本执行过程如下</li>
+<li><code>/etc/X11/xinit/xinitrc</code> 执行 <code>. /etc/X11/Xsession</code></li>
+<li><code>/etc/X11/Xsession</code> 执行 <code>. /etc/X11/Xsession.d/50x11-common_determine-startup</code></li>
+<li><code>/etc/X11/Xsession.d/50x11-common_determine-startup</code> 选定 <code>STARTUP</code>=<code>/usr/bin/x-session-manager</code></li>
+<li><code>/etc/X11/Xsession</code> 执行 <code>/etc/X11/Xsession.d/99x11-common_start</code></li>
+<li><code>/etc/X11/Xsession.d/99x11-common_start</code> 执行 <code>exec $STARTUP</code>，也就是 <code>exec /usr/bin/x-session-manager</code>，在此shell进程空间中执行 <code>/usr/bin/x-session-manager</code> 程序，经过查看，<code>/usr/bin/x-session-manager</code> 实际上是 <code>/usr/bin/gnome-session</code> 的符号链接，也就是此shell进程最后实际上成为了 <code>/usr/bin/gnome-session</code> 进程</li>
+<li>至此gnome相关程序已经成功启动了</li>
+</ol>
+<h3 id="startx-gnome-pstree"><a href="#startx-gnome-pstree" class="headerlink" title="startx-gnome-pstree"></a>startx-gnome-pstree</h3><p>使用 startx 启动 gnome-session，进程关系如下:</p>
+<p><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20201231125141.png" alt="startx-gnome-pstree"></p>
+<h2 id="通过Xsession配置文件默认启动-i3wm"><a href="#通过Xsession配置文件默认启动-i3wm" class="headerlink" title="通过Xsession配置文件默认启动 i3wm"></a>通过Xsession配置文件默认启动 i3wm</h2><p>这种方式理论上来说，在使用startx启动GUI时应该是会生效的。<br>如果使用Display Manger登录，我还不太确定是否应该生效，但是似乎在我的Ubuntu系统上测试并没有生效。</p>
+<h3 id="添加-xsession文件"><a href="#添加-xsession文件" class="headerlink" title="添加~/.xsession文件"></a>添加<code>~/.xsession</code>文件</h3><p>内容如下，最关键的是最后的 <code>exec /usr/bin/i3</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Disable DPMS turning off the screen</span></span><br><span class="line">xset dpms force on</span><br><span class="line">xset s off</span><br><span class="line"></span><br><span class="line"><span class="comment"># Disable bell</span></span><br><span class="line"><span class="comment"># xset -b</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Enable zapping (C-A-&lt;Bksp&gt; kills X)</span></span><br><span class="line">setxkbmap -option terminate:ctrl_alt_bksp</span><br><span class="line"></span><br><span class="line"><span class="comment"># Enforce correct locales from the beginning</span></span><br><span class="line"><span class="built_in">unset</span> LC_COLLATE</span><br><span class="line"><span class="comment"># export LC_CTYPE=zh_CN.UTF-8</span></span><br><span class="line"><span class="built_in">export</span> LC_TIME=zh_CN.UTF-8</span><br><span class="line"><span class="built_in">export</span> LC_NUMERIC=zh_CN.UTF-8</span><br><span class="line"><span class="built_in">export</span> LC_MONETARY=zh_CN.UTF-8</span><br><span class="line"><span class="comment"># export LC_MESSAGES=C</span></span><br><span class="line"><span class="built_in">export</span> LC_PAPER=zh_CN.UTF-8</span><br><span class="line"><span class="built_in">export</span> LC_NAME=zh_CN.UTF-8</span><br><span class="line"><span class="built_in">export</span> LC_ADDRESS=zh_CN.UTF-8</span><br><span class="line"><span class="built_in">export</span> LC_TELEPHONE=zh_CN.UTF-8</span><br><span class="line"><span class="built_in">export</span> LC_MEASUREMENT=zh_CN.UTF-8</span><br><span class="line"><span class="built_in">export</span> LC_IDENTIFICATION=zh_CN.UTF-8</span><br><span class="line"></span><br><span class="line"><span class="comment"># Use XToolkit in java applications</span></span><br><span class="line"><span class="built_in">export</span> AWT_TOOLKIT=XToolkit</span><br><span class="line"></span><br><span class="line"><span class="comment"># Set background color</span></span><br><span class="line">xsetroot -solid <span class="string">&quot;#333333&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Enable core dumps in case something goes wrong</span></span><br><span class="line"><span class="built_in">ulimit</span> -c unlimited</span><br><span class="line"></span><br><span class="line"><span class="comment"># 下面的带日志的启动命令会导致无法启动，不清楚原因</span></span><br><span class="line"><span class="comment"># Start i3 and log to ~/.i3/logfile</span></span><br><span class="line"><span class="comment"># echo &quot;Starting at $(date)&quot; &gt;&gt; ~/.i3/i3log-$(date +&#x27;%F-%k-%M-%S&#x27;) 2&gt;&amp;1</span></span><br><span class="line"><span class="comment"># exec /usr/bin/i3 -V -d all &gt;&gt; ~/.i3/i3log-$(date +&#x27;%F-%k-%M-%S&#x27;) 2&gt;&amp;1</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">exec</span> i3</span><br></pre></td></tr></table></figure>
+<h2 id="运行逻辑"><a href="#运行逻辑" class="headerlink" title="运行逻辑"></a>运行逻辑</h2><p>与gnome启动过程类似，区别主要发生在 <code>/etc/X11/Xsession.d/50x11-common_determine-startup</code> 的执行过程中：</p>
+<ol>
+<li>用户执行 startx</li>
+<li>startx 脚本根据文档所述规则，寻找用户配置失败</li>
+<li>startx 确定使用 <code>/etc/X11/xinit/xinitrc</code> 作为 <code>client</code>，使用 <code>/etc/X11/xinit/xserverrc</code> 作为 <code>Server</code></li>
+<li>startx 调用 <code>xinit /etc/X11/xinit/xinitrc [options...] -- /etc/X11/xinit/xserverrc [options...]</code> 启动 xinit</li>
+<li>xinit 启动一个shell进程执行 <code>/etc/X11/xinit/xserverrc</code>，该shell进程作为 Server，脚本执行过程中使用 <code>exec X ...</code>在shell进程空间内执行<code>X Server</code>，此后原shell进程本质上已经变成 <code>X Server</code> 进程了</li>
+<li>xinit 启动另一个shell进程执行 <code>/etc/X11/xinit/xinitrc</code>，该shell进程作为 Client，脚本执行过程如下</li>
+<li><code>/etc/X11/xinit/xinitrc</code> 执行 <code>. /etc/X11/Xsession</code></li>
+<li><code>/etc/X11/Xsession</code> 执行 <code>. /etc/X11/Xsession.d/50x11-common_determine-startup</code></li>
+<li><code>/etc/X11/Xsession.d/50x11-common_determine-startup</code> 选定 <code>STARTUP</code>=<code>$HOME/.xsession</code></li>
+<li><code>/etc/X11/Xsession</code> 执行 <code>/etc/X11/Xsession.d/99x11-common_start</code></li>
+<li><code>/etc/X11/Xsession.d/99x11-common_start</code> 执行 <code>exec $STARTUP</code>，也就是 <code>exec $HOME/.xsession</code></li>
+<li>具体如何exec一个脚本我还不是很确定，但是肯定是需要shell的，推测 <code>exec $HOME/.xsession</code> 的实际执行结果是在原先的shell进程空间运行了shell，然后在shell环境下执行 <code>$HOME/.xsession</code> 这个脚本的内容</li>
+<li>执行 <code>$HOME/.xsession</code> 这个脚本时遇到命令 <code>exec /usr/bin/i3</code>，然后在其shell进程空间中执行 <code>i3</code> 程序，也就是此shell进程最后实际上成为了 <code>i3</code> 进程</li>
+<li>至此 <code>i3</code> 已经成功启动了</li>
+</ol>
+<h3 id="startx-i3-pstree"><a href="#startx-i3-pstree" class="headerlink" title="startx-i3-pstree"></a>startx-i3-pstree</h3><p>使用 startx 启动 i3，进程关系如下:</p>
+<p><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20201231132607.png" alt="startx-i3-pstree"></p>
+<h2 id="执行-X-程序所需权限"><a href="#执行-X-程序所需权限" class="headerlink" title="执行 X 程序所需权限"></a>执行 <code>X</code> 程序所需权限</h2><p>默认情况下，执行 <code>X</code> 命令是需要 root 权限的。但是在我的Ubuntu系统上不经配置就可以以普通用户的身份执行 <code>X</code>。难道是在Ubuntu上原本就允许以普通用户的的身份直接执行 <code>X</code> 吗？  </p>
+<p>通过执行 <code>startx</code>，然后使用 <code>pstree -u</code> 就可以看到带有用户信息的进程树了，在图中可以看到，尽管<code>startx</code>和<code>xinit</code>都是以用户身份执行的，但是 <code>Xorg</code> 进程所属用户却是 <code>root</code>。<br><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210101030017.png" alt="pstree-u"></p>
+<p>从这个信息可以知道，<code>Xorg</code> 并不是以用户的身份执行的，而是以 <code>root</code> 用户的身份执行的。可以推测，用户启动 <code>startx</code> 时，借助某个 <code>setuid</code> 程序完成了 <code>Xorg</code> 程序的启动。</p>
+<p>那么是哪个setuid程序呢？我们可以沿着startx的执行路径寻找。在默认情况下，startx 会选定 <code>/etc/X11/xinit/xserverrc</code> 作为传递给 <code>xinit</code> 的Server参数，然后 <code>xinit</code> 启动它作为 <code>Server</code>。可以看到<code>/etc/X11/xinit/xserverrc</code>所做的事情是执行了<code>X</code>命令，继续追踪下去会发现 <code>X</code> 也是一个shell脚本，它的内容如下:  </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Execute Xorg.wrap if it exists otherwise execute Xorg directly.</span></span><br><span class="line"><span class="comment"># This allows distros to put the suid wrapper in a separate package.</span></span><br><span class="line"></span><br><span class="line">basedir=/usr/lib/xorg</span><br><span class="line"><span class="keyword">if</span> [ -x <span class="string">&quot;<span class="variable">$basedir</span>&quot;</span>/Xorg.wrap ]; <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">exec</span> <span class="string">&quot;<span class="variable">$basedir</span>&quot;</span>/Xorg.wrap <span class="string">&quot;<span class="variable">$@</span>&quot;</span></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    <span class="built_in">exec</span> <span class="string">&quot;<span class="variable">$basedir</span>&quot;</span>/Xorg <span class="string">&quot;<span class="variable">$@</span>&quot;</span></span><br><span class="line"><span class="keyword">fi</span></span><br></pre></td></tr></table></figure>
+<p>它的运行逻辑是，如果存在 <code>/usr/lib/xorg/Xorg.wrap</code> 便启动它，否则启动 <code>/usr/lib/xorg/Xorg</code>，下面我们来看一些这两个文件的信息：<br><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210101013817.png" alt="Xorg[.wrap]"></p>
+<p>从图中可以看到，这两个都是可执行二进制文件，并且 <code>Xorg.wrap</code> 是 <code>setuid</code> 和 <code>setgid</code> 的，简单地说就是任何对 <code>Xorg.wrap</code> 的执行都将以 <code>Xorg.wrap</code> 这个程序所属用户和用户组的身份进行，进一步查看就会发现它所属用户和用户组都是 <code>root</code>，也就是不管谁执行 <code>Xorg.wrap</code> 这个程序，都会以root身份进行，这样一来，普通用户能执行 <code>X</code> 与 <code>X</code> 要求root权限两件事情就不矛盾了。<br><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210101014401.png" alt="Xorg.wrap setuid">  </p>
+<p>根据上面的讨论，可以确定正是借助 <code>Xorg.wrap</code>，我才能在Ubuntu系统上以普通用户的身份执行 <code>X</code>，也就可以执行基于X的 <code>xinit</code> 和 <code>startx</code> 了。</p>
+<p>但是我的虚拟机中的 Arch 没有 <code>Xorg.wrap</code>， 因此以普通用户身份执行 <code>X</code> 会出错也就不奇怪了，经过搜索，我得知在Arch中，<code>Xorg.wrap</code> 是由 <code>xorg-server</code>这个程序包提供的，因此应该可以安装这个包并经过合适的配置，使得普通用户也可以启动桌面环境。(我没配好)</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/X/" rel="tag"># X</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/12/28/%E5%9F%BA%E4%BA%8EXorg%E7%9A%84Linux%E6%A1%8C%E9%9D%A2%E7%8E%AF%E5%A2%83%EF%BC%88%E4%B8%80%EF%BC%89/" rel="prev" title="基于Xorg的Linux桌面环境（一）">
+      <i class="fa fa-chevron-left"></i> 基于Xorg的Linux桌面环境（一）
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/12/29/Linux%20GUI%E6%97%A0%E5%93%8D%E5%BA%94%E8%A7%A3%E5%86%B3%E5%8A%9E%E6%B3%95/" rel="next" title="Linux GUI无响应解决办法">
+      Linux GUI无响应解决办法 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">概要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9C%A8%E6%9C%AC%E5%9C%B0%E5%90%AF%E5%8A%A8X-Server%E5%92%8CX-Client%E5%B9%B6%E8%BF%9E%E6%8E%A5"><span class="nav-number">2.</span> <span class="nav-text">在本地启动X Server和X Client并连接</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8SHELL%E8%84%9A%E6%9C%AC%E5%AE%8C%E6%88%90GUI%E5%90%AF%E5%8A%A8"><span class="nav-number">2.1.</span> <span class="nav-text">使用SHELL脚本完成GUI启动</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A8%A1%E6%8B%9F%E9%9D%9Eroot%E7%94%A8%E6%88%B7%E7%99%BB%E5%BD%95"><span class="nav-number">2.2.</span> <span class="nav-text">模拟非root用户登录</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#xinit-%E5%92%8C-startx"><span class="nav-number">3.</span> <span class="nav-text">xinit 和 startx</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#xinit"><span class="nav-number">3.1.</span> <span class="nav-text">xinit</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#startx"><span class="nav-number">3.2.</span> <span class="nav-text">startx</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">3.2.1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="nav-number">3.2.2.</span> <span class="nav-text">配置文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8EDebian%E7%9A%84%E7%B3%BB%E7%BB%9F-XSession%E6%96%87%E4%BB%B6"><span class="nav-number">3.2.3.</span> <span class="nav-text">基于Debian的系统-XSession文件</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#startx%E8%84%9A%E6%9C%AC%E5%88%86%E6%9E%90"><span class="nav-number">4.</span> <span class="nav-text">startx脚本分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Ubuntu%E9%BB%98%E8%AE%A4%E9%85%8D%E7%BD%AE%E4%B8%8B%EF%BC%8CGnome%E6%98%AF%E5%A6%82%E4%BD%95%E8%A2%AB%E5%90%AF%E5%8A%A8%E7%9A%84"><span class="nav-number">5.</span> <span class="nav-text">Ubuntu默认配置下，Gnome是如何被启动的</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B7%E4%BD%93%E5%90%AF%E5%8A%A8%E8%B7%AF%E5%BE%84%E6%8E%A8%E6%B5%8B"><span class="nav-number">5.1.</span> <span class="nav-text">具体启动路径推测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#startx-gnome-pstree"><span class="nav-number">5.2.</span> <span class="nav-text">startx-gnome-pstree</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%9A%E8%BF%87Xsession%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E9%BB%98%E8%AE%A4%E5%90%AF%E5%8A%A8-i3wm"><span class="nav-number">6.</span> <span class="nav-text">通过Xsession配置文件默认启动 i3wm</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%BB%E5%8A%A0-xsession%E6%96%87%E4%BB%B6"><span class="nav-number">6.1.</span> <span class="nav-text">添加~&#x2F;.xsession文件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E9%80%BB%E8%BE%91"><span class="nav-number">7.</span> <span class="nav-text">运行逻辑</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#startx-i3-pstree"><span class="nav-number">7.1.</span> <span class="nav-text">startx-i3-pstree</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%A7%E8%A1%8C-X-%E7%A8%8B%E5%BA%8F%E6%89%80%E9%9C%80%E6%9D%83%E9%99%90"><span class="nav-number">8.</span> <span class="nav-text">执行 X 程序所需权限</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Liu Peiyuan"
+      src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/1639911209663.jpg">
+  <p class="site-author-name" itemprop="name">Liu Peiyuan</p>
+  <div class="site-description" itemprop="description">刘沛源的博客</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">46</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lpypl" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lpypl" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lpy.henu@gmail.com" title="E-Mail → mailto:lpy.henu@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://t.me/lpypl" title="Telegram → https:&#x2F;&#x2F;t.me&#x2F;lpypl" rel="noopener" target="_blank"><i class="fab fa-telegram fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Liu Peiyuan</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+      <span class="post-meta-item-text">站点总字数：</span>
+    <span title="站点总字数">67k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">2:02</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://lpypl.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "https://blog.lpypl.top/2020/12/29/%E5%9F%BA%E4%BA%8EXorg%E7%9A%84Linux%E6%A1%8C%E9%9D%A2%E7%8E%AF%E5%A2%83%EF%BC%88%E4%BA%8C%EF%BC%89/";
+    this.page.identifier = "2020/12/29/基于Xorg的Linux桌面环境（二）/";
+    this.page.title = "基于Xorg的Linux桌面环境（二）";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://lpypl.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

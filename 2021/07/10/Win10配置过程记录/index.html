@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.lpypl.top","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"disqus","storage":true,"lazyload":false,"nav":{"disqus":{"text":"Load Disqus","order":-1},"gitalk":{"order":-2}},"activeClass":"disqus"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="简介由于原来的系统出了一些问题，今日重装了Windows10系统，下面简要记录一下各种基本设定以及开发环境的配置过程，供今后参考。 系统安装如何让Win10在系统盘重建ESP分区？系统安装基本没什么好说的，只是需要注意如果有多块磁盘，并且其中一个磁盘存在ESP分区（Fat32），则在重装Win10时，即使选择安装到另一块未分区的磁盘，似乎Win10安装器也不会在另一块磁盘重建ESP分区，而会使用已">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Win10配置过程记录">
+<meta property="og:url" content="https://blog.lpypl.top/2021/07/10/Win10%E9%85%8D%E7%BD%AE%E8%BF%87%E7%A8%8B%E8%AE%B0%E5%BD%95/index.html">
+<meta property="og:site_name" content="Yuan&#39;s blog">
+<meta property="og:description" content="简介由于原来的系统出了一些问题，今日重装了Windows10系统，下面简要记录一下各种基本设定以及开发环境的配置过程，供今后参考。 系统安装如何让Win10在系统盘重建ESP分区？系统安装基本没什么好说的，只是需要注意如果有多块磁盘，并且其中一个磁盘存在ESP分区（Fat32），则在重装Win10时，即使选择安装到另一块未分区的磁盘，似乎Win10安装器也不会在另一块磁盘重建ESP分区，而会使用已">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-07-10T07:15:00.000Z">
+<meta property="article:modified_time" content="2026-02-25T08:25:44.674Z">
+<meta property="article:author" content="Liu Peiyuan">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://blog.lpypl.top/2021/07/10/Win10%E9%85%8D%E7%BD%AE%E8%BF%87%E7%A8%8B%E8%AE%B0%E5%BD%95/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Win10配置过程记录 | Yuan's blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-190455776-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-190455776-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Yuan's blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Yuan's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">刘沛源的博客</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-rss">
+
+    <a href="/atom.xml" rel="section"><i class="fa fa-rss fa-fw"></i>RSS</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.lpypl.top/2021/07/10/Win10%E9%85%8D%E7%BD%AE%E8%BF%87%E7%A8%8B%E8%AE%B0%E5%BD%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/1639911209663.jpg">
+      <meta itemprop="name" content="Liu Peiyuan">
+      <meta itemprop="description" content="刘沛源的博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Yuan's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Win10配置过程记录
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-07-10 15:15:00" itemprop="dateCreated datePublished" datetime="2021-07-10T15:15:00+08:00">2021-07-10</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2026-02-25 16:25:44" itemprop="dateModified" datetime="2026-02-25T16:25:44+08:00">2026-02-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tutorial/" itemprop="url" rel="index"><span itemprop="name">Tutorial</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus：</span>
+    
+    <a title="disqus" href="/2021/07/10/Win10%E9%85%8D%E7%BD%AE%E8%BF%87%E7%A8%8B%E8%AE%B0%E5%BD%95/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2021/07/10/Win10配置过程记录/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>由于原来的系统出了一些问题，今日重装了Windows10系统，下面简要记录一下各种基本设定以及开发环境的配置过程，供今后参考。</p>
+<h2 id="系统安装"><a href="#系统安装" class="headerlink" title="系统安装"></a>系统安装</h2><h3 id="如何让Win10在系统盘重建ESP分区？"><a href="#如何让Win10在系统盘重建ESP分区？" class="headerlink" title="如何让Win10在系统盘重建ESP分区？"></a>如何让Win10在系统盘重建ESP分区？</h3><p>系统安装基本没什么好说的，只是需要注意如果有多块磁盘，并且其中一个磁盘存在ESP分区（Fat32），则在重装Win10时，即使选择安装到另一块未分区的磁盘，似乎Win10安装器也不会在另一块磁盘重建ESP分区，而会使用已有的ESP分区，如果想要Win10安装器在操作系统所在磁盘重建ESP分区，可以把另一块磁盘的ESP分区删掉。</p>
+<p>对于无洁癖用户大可不必这样操作，不过给Win10预留一个未分区磁盘，还是比分好一个NTFS分区给它用要好的， 这样Win10安装器似乎会建立好几个分区，也许多余的分区是用于系统恢复的。</p>
+<h3 id="UEFI启动项管理软件"><a href="#UEFI启动项管理软件" class="headerlink" title="UEFI启动项管理软件"></a>UEFI启动项管理软件</h3><ul>
+<li>*nix系统建议直接使用 <code>efibootmgr</code>，至少Arch系、Debian系的系统都自带这个工具。  </li>
+<li>Windows系统可以用 <code>EasyUEFI</code>，不过试用版过期后就没法用了，即使重装、删除注册表项，也难以重新试用，可以用pj版。  </li>
+</ul>
+<h3 id="指定用户名"><a href="#指定用户名" class="headerlink" title="指定用户名"></a>指定用户名</h3><p>如果按照Win10默认的引导进行配置，它会诱导用户登录微软账户，并自动把微软账户名的前缀（邮箱前缀）作为系统用户名，作为一个经常使用终端的CSer，是无法容忍奇奇怪怪的用户名的。  </p>
+<p>如果想要自定义用户名，需要先以本地账户登录，自己起一个用户名，之后再切换到微软账户登录即可。</p>
+<h2 id="初始配置"><a href="#初始配置" class="headerlink" title="初始配置"></a>初始配置</h2><h3 id="卸载自带应用"><a href="#卸载自带应用" class="headerlink" title="卸载自带应用"></a>卸载自带应用</h3><p>卸载一系列自带的无用软件。</p>
+<h3 id="Onedrive同步"><a href="#Onedrive同步" class="headerlink" title="Onedrive同步"></a>Onedrive同步</h3><p>登录Onedrive并开启个人文件夹同步，打开 <strong>文档</strong> 文件夹的同步功能，这样应该可以实现微信和QQ聊天记录的同步，写此文时尚未安装QQ和微信，所以不是特别确定。</p>
+<h2 id="WSL2配置"><a href="#WSL2配置" class="headerlink" title="WSL2配置"></a>WSL2配置</h2><p>本次重装彻底删掉了Ubuntu系统，打算迁移到WSL2，毕竟双系统切换太麻烦了。  </p>
+<h3 id="WSL2安装"><a href="#WSL2安装" class="headerlink" title="WSL2安装"></a>WSL2安装</h3><p>按照官方教程配置即可，主要步骤大概如下：</p>
+<ul>
+<li>开启两项可选功能： Linux子系统 和 虚拟化平台</li>
+<li>下载安装最新的 WSL2 Linux内核升级包</li>
+<li>设置wsl默认版本为wsl2</li>
+<li>安装所需发行版</li>
+</ul>
+<h3 id="如何从主机访问WSL2？"><a href="#如何从主机访问WSL2？" class="headerlink" title="如何从主机访问WSL2？"></a>如何从主机访问WSL2？</h3><p>由于wsl2的ip地址是动态配置的，而自动端口映射功能也并不稳定，为了便捷地从win10访问wsl2，一种可靠的方案是动态获取wsl2的ip地址并在win10的hosts文件中为其设置域名。  </p>
+<p><a target="_blank" rel="noopener" href="https://github.com/shayne/go-wsl2-host.git">go-wsl2-host</a> 项目实现了这个功能，参照项目说明进行配置,使用时可能会遇到一些问题：  </p>
+<ul>
+<li>服务启动失败：检查用户名和密码，用户名基本就是个人文件夹的名字，密码为微软账户密码  </li>
+<li>账号密码正确仍无法登录：<code>开始-&gt;Windows管理工具-&gt;本地安全策略-&gt;本地策略-&gt;用户权限分配-&gt;作为服务登录-&gt;添加用户或组</code>，把相应用户添加进去  </li>
+<li>服务启动成功，但hosts文件却没变：可以使用 <code>wsl2host debug</code> 命令查看程序输出，如果程序提示无法写入hosts，检查hosts文件是否为只读，把只读属性取消即可。hosts路径为 <code>C:\Windows\System32\drivers\etc\hosts</code>  </li>
+</ul>
+<h3 id="自动启动WSL2，以及其中的一些服务"><a href="#自动启动WSL2，以及其中的一些服务" class="headerlink" title="自动启动WSL2，以及其中的一些服务"></a>自动启动WSL2，以及其中的一些服务</h3><p>WSL2不支持systemd，也就无法通过systemctl配置自启服务，可以在 <code>/etc/init.wsl</code> 中写入一些启动服务的命令，并在Windows中配置开机执行 <code>wsl -u root /etc/init.wsl</code>。可以利用Win10的 <code>任务计划程序</code> 配置执行上述命令。</p>
+<p>我导出的任务计划程序配置（wsl2-init.xml）如下:<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;UTF-16&quot;</span>?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">Task</span> <span class="attr">version</span>=<span class="string">&quot;1.2&quot;</span> <span class="attr">xmlns</span>=<span class="string">&quot;http://schemas.microsoft.com/windows/2004/02/mit/task&quot;</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">RegistrationInfo</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">Date</span>&gt;</span>2021-07-01T20:23:06.8672886<span class="tag">&lt;/<span class="name">Date</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">Author</span>&gt;</span>OMEN\lpyhe<span class="tag">&lt;/<span class="name">Author</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">Description</span>&gt;</span>Windows开机时自动运行WSL2并且运行 /etc/init.wsl<span class="tag">&lt;/<span class="name">Description</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">URI</span>&gt;</span>\Custom\WSL-INIT<span class="tag">&lt;/<span class="name">URI</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">RegistrationInfo</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">Triggers</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">BootTrigger</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">Enabled</span>&gt;</span>true<span class="tag">&lt;/<span class="name">Enabled</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">BootTrigger</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">Triggers</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">Principals</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">Principal</span> <span class="attr">id</span>=<span class="string">&quot;Author&quot;</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">UserId</span>&gt;</span>S-1-5-21-226882884-566579671-1051654333-1001<span class="tag">&lt;/<span class="name">UserId</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">LogonType</span>&gt;</span>Password<span class="tag">&lt;/<span class="name">LogonType</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">RunLevel</span>&gt;</span>LeastPrivilege<span class="tag">&lt;/<span class="name">RunLevel</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">Principal</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">Principals</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">Settings</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">MultipleInstancesPolicy</span>&gt;</span>IgnoreNew<span class="tag">&lt;/<span class="name">MultipleInstancesPolicy</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">DisallowStartIfOnBatteries</span>&gt;</span>true<span class="tag">&lt;/<span class="name">DisallowStartIfOnBatteries</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">StopIfGoingOnBatteries</span>&gt;</span>true<span class="tag">&lt;/<span class="name">StopIfGoingOnBatteries</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">AllowHardTerminate</span>&gt;</span>true<span class="tag">&lt;/<span class="name">AllowHardTerminate</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">StartWhenAvailable</span>&gt;</span>false<span class="tag">&lt;/<span class="name">StartWhenAvailable</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">RunOnlyIfNetworkAvailable</span>&gt;</span>false<span class="tag">&lt;/<span class="name">RunOnlyIfNetworkAvailable</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">IdleSettings</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">StopOnIdleEnd</span>&gt;</span>true<span class="tag">&lt;/<span class="name">StopOnIdleEnd</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">RestartOnIdle</span>&gt;</span>false<span class="tag">&lt;/<span class="name">RestartOnIdle</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">IdleSettings</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">AllowStartOnDemand</span>&gt;</span>true<span class="tag">&lt;/<span class="name">AllowStartOnDemand</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">Enabled</span>&gt;</span>true<span class="tag">&lt;/<span class="name">Enabled</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">Hidden</span>&gt;</span>false<span class="tag">&lt;/<span class="name">Hidden</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">RunOnlyIfIdle</span>&gt;</span>false<span class="tag">&lt;/<span class="name">RunOnlyIfIdle</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">WakeToRun</span>&gt;</span>false<span class="tag">&lt;/<span class="name">WakeToRun</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">ExecutionTimeLimit</span>&gt;</span>PT72H<span class="tag">&lt;/<span class="name">ExecutionTimeLimit</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">Priority</span>&gt;</span>7<span class="tag">&lt;/<span class="name">Priority</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">Settings</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">Actions</span> <span class="attr">Context</span>=<span class="string">&quot;Author&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">Exec</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">Command</span>&gt;</span>wsl<span class="tag">&lt;/<span class="name">Command</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">Arguments</span>&gt;</span>-u root /etc/init.wsl<span class="tag">&lt;/<span class="name">Arguments</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">Exec</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">Actions</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">Task</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="Windows-Terminal-中-wsl自动进入"><a href="#Windows-Terminal-中-wsl自动进入" class="headerlink" title="Windows Terminal 中 wsl自动进入 ~"></a>Windows Terminal 中 wsl自动进入 <code>~</code></h3><p>在windows terminal中配置wsl的启动目录为 <code>//wsl$/Ubuntu-20.04/home/用户名/</code>，可能需要根据实际情况修改wsl名称和用户名。</p>
+<h2 id="Win10-实用软件"><a href="#Win10-实用软件" class="headerlink" title="Win10 实用软件"></a>Win10 实用软件</h2><h3 id="WinSW-设置守护服务"><a href="#WinSW-设置守护服务" class="headerlink" title="WinSW: 设置守护服务"></a>WinSW: 设置守护服务</h3><p>Win10配置守护服务不像Debian、Arch的systemd那样方便，可以借助第三方程序实现，比如 <a target="_blank" rel="noopener" href="https://github.com/winsw/winsw.git">WinSW</a>。</p>
+<p>下面是一个将frpc配置为服务的配置示例：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">service</span>&gt;</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment">&lt;!-- ID of the service. It should be unique across the Windows system--&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">id</span>&gt;</span>frpc<span class="tag">&lt;/<span class="name">id</span>&gt;</span></span><br><span class="line">  <span class="comment">&lt;!-- Display name of the service --&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">name</span>&gt;</span>frpc<span class="tag">&lt;/<span class="name">name</span>&gt;</span></span><br><span class="line">  <span class="comment">&lt;!-- Service description --&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">description</span>&gt;</span>frpc<span class="tag">&lt;/<span class="name">description</span>&gt;</span></span><br><span class="line">  </span><br><span class="line">  <span class="comment">&lt;!-- Path to the executable, which should be started --&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">executable</span>&gt;</span>C:\Programs\Frpc\frpc.exe<span class="tag">&lt;/<span class="name">executable</span>&gt;</span></span><br><span class="line">  </span><br><span class="line">  <span class="tag">&lt;<span class="name">arguments</span>&gt;</span>-c C:\Programs\Frpc\frpc.ini<span class="tag">&lt;/<span class="name">arguments</span>&gt;</span></span><br><span class="line"></span><br><span class="line">  <span class="tag">&lt;<span class="name">onfailure</span> <span class="attr">action</span>=<span class="string">&quot;restart&quot;</span> /&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">service</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h3 id="AutohotKey-配置快捷键"><a href="#AutohotKey-配置快捷键" class="headerlink" title="AutohotKey: 配置快捷键"></a>AutohotKey: 配置快捷键</h3><p>可用于配置快捷键，下面的脚本将 <code>Ctrl + Alt + T</code> 配置为启动<code>Windows Terminal</code>的快捷键。将写好的ahk脚本放到 <code>C:\Users\用户名\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup</code> 中即可开机自启。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">^!t::</span><br><span class="line">Run, wt.exe</span><br><span class="line">return</span><br></pre></td></tr></table></figure>
+<h2 id="WSL2子系统环境配置"><a href="#WSL2子系统环境配置" class="headerlink" title="WSL2子系统环境配置"></a>WSL2子系统环境配置</h2><h3 id="使用python3作为默认python"><a href="#使用python3作为默认python" class="headerlink" title="使用python3作为默认python"></a>使用python3作为默认python</h3><p>推荐使用 <code>update-alternatives</code> 进行配置，这样便于管理。为python3添加alternatives的命令为：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 30</span><br></pre></td></tr></table></figure>
+<h3 id="vim配置"><a href="#vim配置" class="headerlink" title="vim配置"></a>vim配置</h3><p> 首先安装 <a target="_blank" rel="noopener" href="https://github.com/junegunn/vim-plug.git">vim-plug</a>，然后准备好vim配置文件 <code>~/.config/nvim/init.vim</code>， 接下来启动 <code>vim</code> 等待各种插件安装完成，其中Coc插件需要高版本的node，官方源版本过低，参考下一条进行node的安装。</p>
+<p> 我的Vim配置文件：</p>
+ <figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">&quot; setting</span></span><br><span class="line"><span class="comment">&quot; setting - basic</span></span><br><span class="line"><span class="keyword">set</span> nocompatible</span><br><span class="line"><span class="keyword">set</span> encoding=utf8</span><br><span class="line"><span class="keyword">set</span> showcmd</span><br><span class="line"><span class="keyword">set</span> hls</span><br><span class="line"><span class="keyword">set</span> relativenumber</span><br><span class="line"><span class="keyword">set</span> <span class="keyword">number</span></span><br><span class="line"><span class="keyword">syntax</span> <span class="keyword">on</span></span><br><span class="line"><span class="comment">&quot; setting - tab &amp; indent</span></span><br><span class="line"><span class="keyword">set</span> tabstop=<span class="number">4</span></span><br><span class="line"><span class="keyword">set</span> softtabstop=<span class="number">0</span></span><br><span class="line"><span class="keyword">set</span> <span class="built_in">shiftwidth</span>=<span class="number">4</span></span><br><span class="line"><span class="keyword">set</span> expandtab</span><br><span class="line"><span class="keyword">set</span> autoindent</span><br><span class="line"><span class="keyword">set</span> smartindent</span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; keymap</span></span><br><span class="line"><span class="keyword">let</span> mapleader=<span class="string">&quot;,&quot;</span></span><br><span class="line"><span class="keyword">nmap</span> <span class="symbol">&lt;Leader&gt;</span>t :NERDTreeToggle<span class="symbol">&lt;CR&gt;</span></span><br><span class="line"><span class="keyword">nmap</span> <span class="symbol">&lt;Leader&gt;</span><span class="keyword">w</span> :<span class="keyword">w</span><span class="symbol">&lt;CR&gt;</span></span><br><span class="line"><span class="keyword">nmap</span> <span class="symbol">&lt;Leader&gt;</span>q :q<span class="symbol">&lt;CR&gt;</span></span><br><span class="line"><span class="comment">&quot; nmap &lt;Leader&gt;, 10&lt;C-w&gt;&lt;</span></span><br><span class="line"><span class="comment">&quot; nmap &lt;Leader&gt;. 10&lt;C-w&gt;&gt;</span></span><br><span class="line"><span class="keyword">nmap</span> <span class="symbol">&lt;Leader&gt;</span>- <span class="number">5</span><span class="symbol">&lt;C-w&gt;</span>-</span><br><span class="line"><span class="keyword">nmap</span> <span class="symbol">&lt;Leader&gt;</span>= <span class="number">5</span><span class="symbol">&lt;C-w&gt;</span>+</span><br><span class="line"><span class="comment">&quot; nmap &lt;Leader&gt;i :bn&lt;CR&gt;</span></span><br><span class="line"><span class="comment">&quot; nmap &lt;Leader&gt;o :bN&lt;CR&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">inoremap</span> <span class="symbol">&lt;C-L&gt;</span> <span class="symbol">&lt;Del&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; tnoremap &lt;A-h&gt; &lt;C-\&gt;&lt;C-N&gt;&lt;C-w&gt;h</span></span><br><span class="line"><span class="comment">&quot; tnoremap &lt;A-j&gt; &lt;C-\&gt;&lt;C-N&gt;&lt;C-w&gt;j</span></span><br><span class="line"><span class="comment">&quot; tnoremap &lt;A-k&gt; &lt;C-\&gt;&lt;C-N&gt;&lt;C-w&gt;k</span></span><br><span class="line"><span class="comment">&quot; tnoremap &lt;A-l&gt; &lt;C-\&gt;&lt;C-N&gt;&lt;C-w&gt;l</span></span><br><span class="line"><span class="comment">&quot; inoremap &lt;A-h&gt; &lt;C-\&gt;&lt;C-N&gt;&lt;C-w&gt;h</span></span><br><span class="line"><span class="comment">&quot; inoremap &lt;A-j&gt; &lt;C-\&gt;&lt;C-N&gt;&lt;C-w&gt;j</span></span><br><span class="line"><span class="comment">&quot; inoremap &lt;A-k&gt; &lt;C-\&gt;&lt;C-N&gt;&lt;C-w&gt;k</span></span><br><span class="line"><span class="comment">&quot; inoremap &lt;A-l&gt; &lt;C-\&gt;&lt;C-N&gt;&lt;C-w&gt;l</span></span><br><span class="line"><span class="comment">&quot; nnoremap &lt;A-h&gt; &lt;C-w&gt;h</span></span><br><span class="line"><span class="comment">&quot; nnoremap &lt;A-j&gt; &lt;C-w&gt;j</span></span><br><span class="line"><span class="comment">&quot; nnoremap &lt;A-k&gt; &lt;C-w&gt;k</span></span><br><span class="line"><span class="comment">&quot; nnoremap &lt;A-l&gt; &lt;C-w&gt;l</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; use h,i,j,k move cursor in insert mode</span></span><br><span class="line"><span class="keyword">inoremap</span> <span class="symbol">&lt;A-h&gt;</span> <span class="symbol">&lt;C-o&gt;</span>h</span><br><span class="line"><span class="keyword">inoremap</span> <span class="symbol">&lt;A-j&gt;</span> <span class="symbol">&lt;C-o&gt;</span><span class="keyword">j</span></span><br><span class="line"><span class="keyword">inoremap</span> <span class="symbol">&lt;A-k&gt;</span> <span class="symbol">&lt;C-o&gt;</span><span class="keyword">k</span></span><br><span class="line"><span class="keyword">inoremap</span> <span class="symbol">&lt;A-l&gt;</span> <span class="symbol">&lt;C-o&gt;</span><span class="keyword">l</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; use h,i,j,k switch window in normal mode</span></span><br><span class="line"><span class="keyword">nnoremap</span> <span class="symbol">&lt;A-h&gt;</span> <span class="symbol">&lt;C-w&gt;</span>h</span><br><span class="line"><span class="keyword">nnoremap</span> <span class="symbol">&lt;A-j&gt;</span> <span class="symbol">&lt;C-w&gt;</span><span class="keyword">j</span></span><br><span class="line"><span class="keyword">nnoremap</span> <span class="symbol">&lt;A-k&gt;</span> <span class="symbol">&lt;C-w&gt;</span><span class="keyword">k</span></span><br><span class="line"><span class="keyword">nnoremap</span> <span class="symbol">&lt;A-l&gt;</span> <span class="symbol">&lt;C-w&gt;</span><span class="keyword">l</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; 在使用CTRL-U 和 CTRL-H时开启新的undo</span></span><br><span class="line"><span class="comment">&quot; 防止意外删除字符却不可undo</span></span><br><span class="line"><span class="keyword">inoremap</span> <span class="symbol">&lt;C-H&gt;</span> <span class="symbol">&lt;C-G&gt;</span><span class="keyword">u</span><span class="symbol">&lt;C-H&gt;</span></span><br><span class="line"><span class="keyword">inoremap</span> <span class="symbol">&lt;C-U&gt;</span> <span class="symbol">&lt;C-G&gt;</span><span class="keyword">u</span><span class="symbol">&lt;C-U&gt;</span></span><br><span class="line"></span><br><span class="line">tnoremap <span class="symbol">&lt;Esc&gt;</span> &lt;C-\&gt;<span class="symbol">&lt;C-N&gt;</span></span><br><span class="line"></span><br><span class="line">tnoremap <span class="symbol">&lt;A-n&gt;</span> &lt;C-\&gt;<span class="symbol">&lt;C-N&gt;</span>gt</span><br><span class="line">tnoremap <span class="symbol">&lt;A-p&gt;</span> &lt;C-\&gt;<span class="symbol">&lt;C-N&gt;</span>gT</span><br><span class="line"><span class="keyword">inoremap</span> <span class="symbol">&lt;A-n&gt;</span> &lt;C-\&gt;<span class="symbol">&lt;C-N&gt;</span>gt</span><br><span class="line"><span class="keyword">inoremap</span> <span class="symbol">&lt;A-p&gt;</span> &lt;C-\&gt;<span class="symbol">&lt;C-N&gt;</span>gT</span><br><span class="line"><span class="keyword">nnoremap</span> <span class="symbol">&lt;A-n&gt;</span> gt </span><br><span class="line"><span class="keyword">nnoremap</span> <span class="symbol">&lt;A-p&gt;</span> gT</span><br><span class="line"></span><br><span class="line"><span class="keyword">augroup</span> terminal</span><br><span class="line">    autocmd!</span><br><span class="line">    <span class="keyword">autocmd</span> TermOpen * <span class="keyword">setlocal</span> nonumber</span><br><span class="line">    <span class="keyword">autocmd</span> TermOpen * <span class="keyword">setlocal</span> norelativenumber</span><br><span class="line">    <span class="keyword">autocmd</span> TermOpen * <span class="keyword">setlocal</span> signcolumn=<span class="keyword">no</span></span><br><span class="line"><span class="keyword">augroup</span> end</span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; for cpp</span></span><br><span class="line"><span class="keyword">function!</span> <span class="title">CompileAndRun</span><span class="params">()</span> </span><br><span class="line">    <span class="keyword">write</span></span><br><span class="line">    <span class="keyword">execute</span> <span class="built_in">printf</span>(<span class="string">&quot;!g++ -std=c++11 -Wall %s -o %s &amp;&amp; %s&quot;</span>, <span class="built_in">expand</span>(<span class="string">&quot;%:p&quot;</span>), <span class="built_in">expand</span>(<span class="string">&quot;%:p:r&quot;</span>), <span class="built_in">expand</span>(<span class="string">&quot;%:p:r&quot;</span>))</span><br><span class="line"><span class="keyword">endfunction</span></span><br><span class="line"><span class="keyword">autocmd</span> <span class="keyword">filetype</span> cpp command! CompileAndRun <span class="keyword">call</span> CompileAndRun()</span><br><span class="line"><span class="keyword">autocmd</span> <span class="keyword">filetype</span> cpp <span class="keyword">nnoremap</span> <span class="symbol">&lt;Leader&gt;</span>r :CompileAndRun<span class="symbol">&lt;CR&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; vim-plug</span></span><br><span class="line"><span class="keyword">call</span> plug#begin(stdpath(<span class="string">&#x27;data&#x27;</span>) . <span class="string">&#x27;/plugged&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Make sure you are using single quotes</span></span><br><span class="line">Plug <span class="string">&#x27;neoclide/coc.nvim&#x27;</span>, &#123;<span class="string">&#x27;branch&#x27;</span>: <span class="string">&#x27;release&#x27;</span>&#125;</span><br><span class="line">Plug <span class="string">&#x27;vim-airline/vim-airline&#x27;</span></span><br><span class="line">Plug <span class="string">&#x27;vim-airline/vim-airline-themes&#x27;</span></span><br><span class="line">Plug <span class="string">&#x27;Yggdroot/LeaderF&#x27;</span></span><br><span class="line">Plug <span class="string">&#x27;wakatime/vim-wakatime&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; On-demand loading</span></span><br><span class="line">Plug <span class="string">&#x27;scrooloose/nerdtree&#x27;</span>, &#123; <span class="string">&#x27;on&#x27;</span>:  <span class="string">&#x27;NERDTreeToggle&#x27;</span> &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Always load the vim-devicons as th very last one</span></span><br><span class="line">Plug <span class="string">&#x27;ryanoasis/vim-devicons&#x27;</span></span><br><span class="line"><span class="keyword">call</span> plug#end()</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> <span class="variable">g:airline_powerline_fonts</span> = <span class="number">1</span></span><br><span class="line"><span class="keyword">let</span> <span class="variable">g:airline_theme</span>=<span class="string">&#x27;bubblegum&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; &gt;&gt;&gt; FOR COC &gt;&gt;&gt;</span></span><br><span class="line"><span class="comment">&quot; TextEdit might fail if hidden is not set</span></span><br><span class="line"><span class="keyword">set</span> hidden</span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Some servers have issue with backup files, see #649</span></span><br><span class="line"><span class="keyword">set</span> nobackup</span><br><span class="line"><span class="keyword">set</span> nowritebackup</span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Give more space for display messages</span></span><br><span class="line"><span class="keyword">set</span> cmdheight=<span class="number">2</span></span><br><span class="line"></span><br><span class="line"><span class="string">&quot; Having longer updatetime (default is 4000 ms = 4 s) leads to noticeable&quot;</span></span><br><span class="line"><span class="comment">&quot; delays and poor user experience</span></span><br><span class="line"><span class="keyword">set</span> updatetime=<span class="number">300</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Don&#x27;t pass messages to |ins-completion-menu|</span></span><br><span class="line"><span class="keyword">set</span> shortmess+=<span class="keyword">c</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Always show the signcolumn, otherwise it would shift the text each time</span></span><br><span class="line"><span class="comment">&quot; diagnostics appear/become resolved.</span></span><br><span class="line"><span class="keyword">if</span> <span class="built_in">has</span>(<span class="string">&quot;patch-8.1.1564&quot;</span>)</span><br><span class="line">  <span class="comment">&quot; Recently vim can merge signcolumn and number column into one</span></span><br><span class="line">  <span class="keyword">set</span> signcolumn=<span class="keyword">number</span></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">  <span class="keyword">set</span> signcolumn=yes</span><br><span class="line"><span class="keyword">endif</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Use tab for trigger completion with characters ahead and navigate.</span></span><br><span class="line"><span class="comment">&quot; <span class="doctag">NOTE:</span> Use command &#x27;:verbose imap &lt;tab&gt;&#x27; to make sure tab is not mapped by</span></span><br><span class="line"><span class="comment">&quot; other plugin before putting this into your config.</span></span><br><span class="line"><span class="keyword">inoremap</span> <span class="symbol">&lt;silent&gt;</span><span class="symbol">&lt;expr&gt;</span> <span class="symbol">&lt;TAB&gt;</span></span><br><span class="line">      \ <span class="built_in">pumvisible</span>() ? <span class="string">&quot;\&lt;C-n&gt;&quot;</span> :</span><br><span class="line">      \ <span class="symbol">&lt;SID&gt;</span>check_back_space() ? <span class="string">&quot;\&lt;TAB&gt;&quot;</span> :</span><br><span class="line">      \ coc#refresh()</span><br><span class="line"><span class="keyword">inoremap</span> <span class="symbol">&lt;expr&gt;</span><span class="symbol">&lt;S-TAB&gt;</span> <span class="built_in">pumvisible</span>() ? <span class="string">&quot;\&lt;C-p&gt;&quot;</span> : <span class="string">&quot;\&lt;C-h&gt;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">function!</span> <span class="title">s</span>:check_back_space<span class="params">()</span> abort</span><br><span class="line">  <span class="keyword">let</span> <span class="keyword">col</span> = <span class="keyword">col</span>(<span class="string">&#x27;.&#x27;</span>) - <span class="number">1</span></span><br><span class="line">  <span class="keyword">return</span> !col || <span class="built_in">getline</span>(<span class="string">&#x27;.&#x27;</span>)[<span class="keyword">col</span> - <span class="number">1</span>]  =~# <span class="string">&#x27;\s&#x27;</span></span><br><span class="line"><span class="keyword">endfunction</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Use &lt;c-space&gt; to trigger completion.</span></span><br><span class="line"><span class="keyword">if</span> <span class="built_in">has</span>(<span class="string">&#x27;nvim&#x27;</span>)</span><br><span class="line">  <span class="keyword">inoremap</span> <span class="symbol">&lt;silent&gt;</span><span class="symbol">&lt;expr&gt;</span> <span class="symbol">&lt;c-space&gt;</span> coc#refresh()</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">  <span class="keyword">inoremap</span> <span class="symbol">&lt;silent&gt;</span><span class="symbol">&lt;expr&gt;</span> &lt;<span class="keyword">c</span>-@&gt; coc#refresh()</span><br><span class="line"><span class="keyword">endif</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Use [g and ]g to navigate diagnostics</span></span><br><span class="line"><span class="comment">&quot; use :CocDiagnostics to get all diagnostics of current buffer in location list</span></span><br><span class="line"><span class="keyword">nmap</span> <span class="symbol">&lt;silent&gt;</span> [g <span class="symbol">&lt;Plug&gt;</span>(coc-diagnostic-<span class="keyword">prev</span>)</span><br><span class="line"><span class="keyword">nmap</span> <span class="symbol">&lt;silent&gt;</span> ]g <span class="symbol">&lt;Plug&gt;</span>(coc-diagnostic-<span class="keyword">next</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; GoTo code navigation.</span></span><br><span class="line"><span class="keyword">nmap</span> <span class="symbol">&lt;silent&gt;</span> gd <span class="symbol">&lt;Plug&gt;</span>(coc-definition)</span><br><span class="line"><span class="keyword">nmap</span> <span class="symbol">&lt;silent&gt;</span> gy <span class="symbol">&lt;Plug&gt;</span>(coc-<span class="built_in">type</span>-definition)</span><br><span class="line"><span class="keyword">nmap</span> <span class="symbol">&lt;silent&gt;</span> gi <span class="symbol">&lt;Plug&gt;</span>(coc-implementation)</span><br><span class="line"><span class="keyword">nmap</span> <span class="symbol">&lt;silent&gt;</span> <span class="keyword">gr</span> <span class="symbol">&lt;Plug&gt;</span>(coc-references)</span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Use K to show documentation in preview window.</span></span><br><span class="line"><span class="keyword">nnoremap</span> <span class="symbol">&lt;silent&gt;</span> K :<span class="keyword">call</span> <span class="symbol">&lt;SID&gt;</span>show_documentation()<span class="symbol">&lt;CR&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">function!</span> <span class="title">s</span>:show_documentation<span class="params">()</span></span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">index</span>([<span class="string">&#x27;vim&#x27;</span>,<span class="string">&#x27;help&#x27;</span>], &amp;<span class="keyword">filetype</span>) &gt;= <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">execute</span> <span class="string">&#x27;h &#x27;</span>.<span class="built_in">expand</span>(<span class="string">&#x27;&lt;cword&gt;&#x27;</span>)</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">    <span class="keyword">call</span> CocActionAsync(<span class="string">&#x27;doHover&#x27;</span>)</span><br><span class="line">  <span class="keyword">endif</span></span><br><span class="line"><span class="keyword">endfunction</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Highlight the symbol and its references when holding the cursor.</span></span><br><span class="line"><span class="keyword">autocmd</span> CursorHold * <span class="keyword">silent</span> <span class="keyword">call</span> CocActionAsync(<span class="string">&#x27;highlight&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Symbol renaming.</span></span><br><span class="line"><span class="keyword">nmap</span> <span class="symbol">&lt;leader&gt;</span>rn <span class="symbol">&lt;Plug&gt;</span>(coc-<span class="built_in">rename</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Formatting selected code.</span></span><br><span class="line"><span class="comment">&quot; xmap &lt;leader&gt;f  &lt;Plug&gt;(coc-format)</span></span><br><span class="line"><span class="comment">&quot; nmap &lt;leader&gt;f  &lt;Plug&gt;(coc-format)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">augroup</span> mygroup</span><br><span class="line">  autocmd!</span><br><span class="line">  <span class="comment">&quot; Setup formatexpr specified filetype(s).</span></span><br><span class="line">  <span class="keyword">autocmd</span> FileType typescript,json <span class="keyword">setl</span> formatexpr=CocAction(<span class="string">&#x27;formatSelected&#x27;</span>)</span><br><span class="line">  <span class="comment">&quot; Update signature help on jump placeholder.</span></span><br><span class="line">  <span class="keyword">autocmd</span> User CocJumpPlaceholder <span class="keyword">call</span> CocActionAsync(<span class="string">&#x27;showSignatureHelp&#x27;</span>)</span><br><span class="line"><span class="keyword">augroup</span> end</span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Applying codeAction to the selected region.</span></span><br><span class="line"><span class="comment">&quot; Example: `&lt;leader&gt;aap` for current paragraph</span></span><br><span class="line"><span class="keyword">xmap</span> <span class="symbol">&lt;leader&gt;</span><span class="keyword">a</span>  <span class="symbol">&lt;Plug&gt;</span>(coc-codeaction-selected)</span><br><span class="line"><span class="keyword">nmap</span> <span class="symbol">&lt;leader&gt;</span><span class="keyword">a</span>  <span class="symbol">&lt;Plug&gt;</span>(coc-codeaction-selected)</span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Remap keys for applying codeAction to the current buffer.</span></span><br><span class="line"><span class="keyword">nmap</span> <span class="symbol">&lt;leader&gt;</span>ac  <span class="symbol">&lt;Plug&gt;</span>(coc-codeaction)</span><br><span class="line"><span class="comment">&quot; Apply AutoFix to problem on the current line.</span></span><br><span class="line"><span class="keyword">nmap</span> <span class="symbol">&lt;leader&gt;</span>qf  <span class="symbol">&lt;Plug&gt;</span>(coc-<span class="keyword">fix</span>-current)</span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Map function and class text objects</span></span><br><span class="line"><span class="comment">&quot; <span class="doctag">NOTE:</span> Requires &#x27;textDocument.documentSymbol&#x27; support from the language server.</span></span><br><span class="line"><span class="keyword">xmap</span> <span class="keyword">if</span> <span class="symbol">&lt;Plug&gt;</span>(coc-funcobj-i)</span><br><span class="line"><span class="keyword">omap</span> <span class="keyword">if</span> <span class="symbol">&lt;Plug&gt;</span>(coc-funcobj-i)</span><br><span class="line"><span class="keyword">xmap</span> af <span class="symbol">&lt;Plug&gt;</span>(coc-funcobj-<span class="keyword">a</span>)</span><br><span class="line"><span class="keyword">omap</span> af <span class="symbol">&lt;Plug&gt;</span>(coc-funcobj-<span class="keyword">a</span>)</span><br><span class="line"><span class="keyword">xmap</span> ic <span class="symbol">&lt;Plug&gt;</span>(coc-classobj-i)</span><br><span class="line"><span class="keyword">omap</span> ic <span class="symbol">&lt;Plug&gt;</span>(coc-classobj-i)</span><br><span class="line"><span class="keyword">xmap</span> ac <span class="symbol">&lt;Plug&gt;</span>(coc-classobj-<span class="keyword">a</span>)</span><br><span class="line"><span class="keyword">omap</span> ac <span class="symbol">&lt;Plug&gt;</span>(coc-classobj-<span class="keyword">a</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Remap &lt;C-f&gt; and &lt;C-b&gt; for scroll float windows/popups.</span></span><br><span class="line"><span class="comment">&quot; Note coc#float#scroll works on neovim &gt;= 0.4.0 or vim &gt;= 8.2.0750</span></span><br><span class="line"><span class="keyword">nnoremap</span> <span class="symbol">&lt;nowait&gt;</span><span class="symbol">&lt;expr&gt;</span> <span class="symbol">&lt;C-f&gt;</span> coc#float#has_scroll() ? coc#float#scroll(<span class="number">1</span>) : <span class="string">&quot;\&lt;C-f&gt;&quot;</span></span><br><span class="line"><span class="keyword">nnoremap</span> <span class="symbol">&lt;nowait&gt;</span><span class="symbol">&lt;expr&gt;</span> <span class="symbol">&lt;C-b&gt;</span> coc#float#has_scroll() ? coc#float#scroll(<span class="number">0</span>) : <span class="string">&quot;\&lt;C-b&gt;&quot;</span></span><br><span class="line"><span class="keyword">inoremap</span> <span class="symbol">&lt;nowait&gt;</span><span class="symbol">&lt;expr&gt;</span> <span class="symbol">&lt;C-f&gt;</span> coc#float#has_scroll() ? <span class="string">&quot;\&lt;c-r&gt;=coc#float#scroll(1)\&lt;cr&gt;&quot;</span> : <span class="string">&quot;\&lt;Right&gt;&quot;</span></span><br><span class="line"><span class="keyword">inoremap</span> <span class="symbol">&lt;nowait&gt;</span><span class="symbol">&lt;expr&gt;</span> <span class="symbol">&lt;C-b&gt;</span> coc#float#has_scroll() ? <span class="string">&quot;\&lt;c-r&gt;=coc#float#scroll(0)\&lt;cr&gt;&quot;</span> : <span class="string">&quot;\&lt;Left&gt;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; NeoVim-only mapping for visual mode scroll</span></span><br><span class="line"><span class="comment">&quot; Useful on signatureHelp after jump placeholder of snippet expansion</span></span><br><span class="line"><span class="keyword">if</span> <span class="built_in">has</span>(<span class="string">&#x27;nvim&#x27;</span>)</span><br><span class="line">  <span class="keyword">vnoremap</span> <span class="symbol">&lt;nowait&gt;</span><span class="symbol">&lt;expr&gt;</span> <span class="symbol">&lt;C-f&gt;</span> coc#float#has_scroll() ? coc#float#nvim_scroll(<span class="number">1</span>, <span class="number">1</span>) : <span class="string">&quot;\&lt;C-f&gt;&quot;</span></span><br><span class="line">  <span class="keyword">vnoremap</span> <span class="symbol">&lt;nowait&gt;</span><span class="symbol">&lt;expr&gt;</span> <span class="symbol">&lt;C-b&gt;</span> coc#float#has_scroll() ? coc#float#nvim_scroll(<span class="number">0</span>, <span class="number">1</span>) : <span class="string">&quot;\&lt;C-b&gt;&quot;</span></span><br><span class="line"><span class="keyword">endif</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Use CTRL-S for selections ranges.</span></span><br><span class="line"><span class="comment">&quot; Requires &#x27;textDocument/selectionRange&#x27; support of language server.</span></span><br><span class="line"><span class="keyword">nmap</span> <span class="symbol">&lt;silent&gt;</span> <span class="symbol">&lt;C-s&gt;</span> <span class="symbol">&lt;Plug&gt;</span>(coc-<span class="built_in">range</span>-select)</span><br><span class="line"><span class="keyword">xmap</span> <span class="symbol">&lt;silent&gt;</span> <span class="symbol">&lt;C-s&gt;</span> <span class="symbol">&lt;Plug&gt;</span>(coc-<span class="built_in">range</span>-select)</span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Add `:Format` command to format current buffer.</span></span><br><span class="line">command! -nargs=<span class="number">0</span> Format :<span class="keyword">call</span> CocAction(<span class="string">&#x27;format&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Add `:Fold` command to fold current buffer.</span></span><br><span class="line">command! -nargs=? Fold :<span class="keyword">call</span> CocAction(<span class="string">&#x27;fold&#x27;</span>, <span class="symbol">&lt;f-args&gt;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; Add `:OR` command for organize imports of the current buffer.</span></span><br><span class="line">command! -nargs=<span class="number">0</span> OR :<span class="keyword">call</span> CocAction(<span class="string">&#x27;runCommand&#x27;</span>, <span class="string">&#x27;editor.action.organizeImport&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">&quot; &gt;&gt;&gt; config for coc &gt;&gt;&gt;</span></span><br><span class="line"><span class="keyword">let</span> <span class="variable">g:coc_global_extensions</span> = [<span class="string">&#x27;coc-tsserver&#x27;</span>, <span class="string">&#x27;coc-html&#x27;</span>, <span class="string">&#x27;coc-css&#x27;</span>, <span class="string">&#x27;coc-json&#x27;</span>,</span><br><span class="line">	\ <span class="string">&#x27;coc-python&#x27;</span>, <span class="string">&#x27;coc-xml&#x27;</span>, <span class="string">&#x27;coc-yaml&#x27;</span>, <span class="string">&#x27;coc-markdownlint&#x27;</span>, <span class="string">&#x27;coc-highlight&#x27;</span>,</span><br><span class="line">    \ <span class="string">&#x27;coc-clangd&#x27;</span>, <span class="string">&#x27;coc-pairs&#x27;</span>, <span class="string">&#x27;coc-git&#x27;</span>, <span class="string">&#x27;coc-go&#x27;</span>, <span class="string">&#x27;coc-rust-analyzer&#x27;</span>]</span><br><span class="line"><span class="keyword">inoremap</span> <span class="symbol">&lt;silent&gt;</span><span class="symbol">&lt;expr&gt;</span> <span class="symbol">&lt;cr&gt;</span> <span class="built_in">pumvisible</span>() ? coc#_select_confirm() : <span class="string">&quot;\&lt;C-g&gt;u\&lt;CR&gt;&quot;</span></span><br><span class="line"><span class="comment">&quot; &lt;&lt;&lt; config for coc &lt;&lt;&lt;</span></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="node安装"><a href="#node安装" class="headerlink" title="node安装"></a>node安装</h3><p>官方源中版本过低，很多软件都要求更高版本的node，建议使用<a target="_blank" rel="noopener" href="https://github.com/nodesource/distributions.git">nodesource</a>维护的软件源安装，具体参考<a target="_blank" rel="noopener" href="https://github.com/nodesource/distributions.git">项目主页</a>。写此文时，安装长期维护版node的具体命令为：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Using Ubuntu</span></span><br><span class="line">curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -</span><br><span class="line">sudo apt-get install -y nodejs</span><br></pre></td></tr></table></figure></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/07/02/%E5%88%A9%E7%94%A8%E5%BF%AB%E9%80%9F%E5%B9%82%E6%A8%A1%E8%BF%90%E7%AE%97%E5%8A%A0%E9%80%9FRSA%E5%8A%A0%E5%AF%86%E8%A7%A3%E5%AF%86%E8%BF%87%E7%A8%8B/" rel="prev" title="利用快速幂模运算加速RSA加密解密过程">
+      <i class="fa fa-chevron-left"></i> 利用快速幂模运算加速RSA加密解密过程
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/07/24/VMWare-UbuntuServer2004%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE%E8%AE%B0%E5%BD%95/" rel="next" title="VMWare-UbuntuServer2004网络配置记录">
+      VMWare-UbuntuServer2004网络配置记录 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E5%AE%89%E8%A3%85"><span class="nav-number">2.</span> <span class="nav-text">系统安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E8%AE%A9Win10%E5%9C%A8%E7%B3%BB%E7%BB%9F%E7%9B%98%E9%87%8D%E5%BB%BAESP%E5%88%86%E5%8C%BA%EF%BC%9F"><span class="nav-number">2.1.</span> <span class="nav-text">如何让Win10在系统盘重建ESP分区？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UEFI%E5%90%AF%E5%8A%A8%E9%A1%B9%E7%AE%A1%E7%90%86%E8%BD%AF%E4%BB%B6"><span class="nav-number">2.2.</span> <span class="nav-text">UEFI启动项管理软件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8C%87%E5%AE%9A%E7%94%A8%E6%88%B7%E5%90%8D"><span class="nav-number">2.3.</span> <span class="nav-text">指定用户名</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E9%85%8D%E7%BD%AE"><span class="nav-number">3.</span> <span class="nav-text">初始配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%B8%E8%BD%BD%E8%87%AA%E5%B8%A6%E5%BA%94%E7%94%A8"><span class="nav-number">3.1.</span> <span class="nav-text">卸载自带应用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Onedrive%E5%90%8C%E6%AD%A5"><span class="nav-number">3.2.</span> <span class="nav-text">Onedrive同步</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#WSL2%E9%85%8D%E7%BD%AE"><span class="nav-number">4.</span> <span class="nav-text">WSL2配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#WSL2%E5%AE%89%E8%A3%85"><span class="nav-number">4.1.</span> <span class="nav-text">WSL2安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E4%BB%8E%E4%B8%BB%E6%9C%BA%E8%AE%BF%E9%97%AEWSL2%EF%BC%9F"><span class="nav-number">4.2.</span> <span class="nav-text">如何从主机访问WSL2？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%87%AA%E5%8A%A8%E5%90%AF%E5%8A%A8WSL2%EF%BC%8C%E4%BB%A5%E5%8F%8A%E5%85%B6%E4%B8%AD%E7%9A%84%E4%B8%80%E4%BA%9B%E6%9C%8D%E5%8A%A1"><span class="nav-number">4.3.</span> <span class="nav-text">自动启动WSL2，以及其中的一些服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Windows-Terminal-%E4%B8%AD-wsl%E8%87%AA%E5%8A%A8%E8%BF%9B%E5%85%A5"><span class="nav-number">4.4.</span> <span class="nav-text">Windows Terminal 中 wsl自动进入 ~</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Win10-%E5%AE%9E%E7%94%A8%E8%BD%AF%E4%BB%B6"><span class="nav-number">5.</span> <span class="nav-text">Win10 实用软件</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#WinSW-%E8%AE%BE%E7%BD%AE%E5%AE%88%E6%8A%A4%E6%9C%8D%E5%8A%A1"><span class="nav-number">5.1.</span> <span class="nav-text">WinSW: 设置守护服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AutohotKey-%E9%85%8D%E7%BD%AE%E5%BF%AB%E6%8D%B7%E9%94%AE"><span class="nav-number">5.2.</span> <span class="nav-text">AutohotKey: 配置快捷键</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#WSL2%E5%AD%90%E7%B3%BB%E7%BB%9F%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE"><span class="nav-number">6.</span> <span class="nav-text">WSL2子系统环境配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8python3%E4%BD%9C%E4%B8%BA%E9%BB%98%E8%AE%A4python"><span class="nav-number">6.1.</span> <span class="nav-text">使用python3作为默认python</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#vim%E9%85%8D%E7%BD%AE"><span class="nav-number">6.2.</span> <span class="nav-text">vim配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#node%E5%AE%89%E8%A3%85"><span class="nav-number">6.3.</span> <span class="nav-text">node安装</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Liu Peiyuan"
+      src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/1639911209663.jpg">
+  <p class="site-author-name" itemprop="name">Liu Peiyuan</p>
+  <div class="site-description" itemprop="description">刘沛源的博客</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">46</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lpypl" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lpypl" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lpy.henu@gmail.com" title="E-Mail → mailto:lpy.henu@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://t.me/lpypl" title="Telegram → https:&#x2F;&#x2F;t.me&#x2F;lpypl" rel="noopener" target="_blank"><i class="fab fa-telegram fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Liu Peiyuan</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+      <span class="post-meta-item-text">站点总字数：</span>
+    <span title="站点总字数">67k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">2:02</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://lpypl.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "https://blog.lpypl.top/2021/07/10/Win10%E9%85%8D%E7%BD%AE%E8%BF%87%E7%A8%8B%E8%AE%B0%E5%BD%95/";
+    this.page.identifier = "2021/07/10/Win10配置过程记录/";
+    this.page.title = "Win10配置过程记录";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://lpypl.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

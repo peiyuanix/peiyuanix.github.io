@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.lpypl.top","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"disqus","storage":true,"lazyload":false,"nav":{"disqus":{"text":"Load Disqus","order":-1},"gitalk":{"order":-2}},"activeClass":"disqus"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="BackgroundThis blog grew out of a question I asked in the SuperUser community : Relay TCP upload traffic and make download traffic go directly to the client.   Purpose  Client sends request traffic to">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Relay TCP upload traffic and make download traffic go directly to the client">
+<meta property="og:url" content="https://blog.lpypl.top/2022/03/24/Relay%20TCP%20upload%20traffic/index.html">
+<meta property="og:site_name" content="Yuan&#39;s blog">
+<meta property="og:description" content="BackgroundThis blog grew out of a question I asked in the SuperUser community : Relay TCP upload traffic and make download traffic go directly to the client.   Purpose  Client sends request traffic to">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20220323210146.png">
+<meta property="article:published_time" content="2022-03-24T09:48:00.000Z">
+<meta property="article:modified_time" content="2026-02-25T08:25:44.676Z">
+<meta property="article:author" content="Liu Peiyuan">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="Network">
+<meta property="article:tag" content="Nftables">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20220323210146.png">
+
+<link rel="canonical" href="https://blog.lpypl.top/2022/03/24/Relay%20TCP%20upload%20traffic/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Relay TCP upload traffic and make download traffic go directly to the client | Yuan's blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-190455776-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-190455776-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Yuan's blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Yuan's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">刘沛源的博客</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-rss">
+
+    <a href="/atom.xml" rel="section"><i class="fa fa-rss fa-fw"></i>RSS</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.lpypl.top/2022/03/24/Relay%20TCP%20upload%20traffic/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/1639911209663.jpg">
+      <meta itemprop="name" content="Liu Peiyuan">
+      <meta itemprop="description" content="刘沛源的博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Yuan's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Relay TCP upload traffic and make download traffic go directly to the client
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-03-24 17:48:00" itemprop="dateCreated datePublished" datetime="2022-03-24T17:48:00+08:00">2022-03-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2026-02-25 16:25:44" itemprop="dateModified" datetime="2026-02-25T16:25:44+08:00">2026-02-25</time>
+              </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus：</span>
+    
+    <a title="disqus" href="/2022/03/24/Relay%20TCP%20upload%20traffic/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2022/03/24/Relay TCP upload traffic/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.6k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>3 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Background"><a href="#Background" class="headerlink" title="Background"></a>Background</h2><p>This blog grew out of a question I asked in the SuperUser community : <a target="_blank" rel="noopener" href="https://superuser.com/questions/1712341">Relay TCP upload traffic and make download traffic go directly to the client</a>.  </p>
+<h2 id="Purpose"><a href="#Purpose" class="headerlink" title="Purpose"></a>Purpose</h2><p><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20220323210146.png" alt="the traffic flow"></p>
+<ul>
+<li><code>Client</code> sends request traffic to <code>RelayServer:10080</code>   </li>
+<li><code>RelayServer:10080</code> relay request traffic from client to <code>TargetServer:10080</code>  (<em>Achieved by DNAT rules on the relay server</em>)</li>
+<li><code>TargetServer:10080</code> response <code>client</code> as if it is <code>RelayServer:10080</code> (<em>Achieved by SNAT rules on the target server</em>)  </li>
+<li><code>Client</code> receives response traffic from <code>RelayServer:10080</code>, which is actually from <code>TargetServer:10080</code>   </li>
+<li>it works for both TCP and UDP protocol  </li>
+</ul>
+<h2 id="Note"><a href="#Note" class="headerlink" title="Note"></a>Note</h2><p>It <strong>cannot</strong> be implemented in the real-world network due to the <strong>source address verification</strong>.</p>
+<h2 id="Environment"><a href="#Environment" class="headerlink" title="Environment"></a>Environment</h2><ul>
+<li><p>Devices: 4 Vmware Machines with bridged network  </p>
+<ul>
+<li>Router  </li>
+<li>Client  </li>
+<li>Relay Server  </li>
+<li>Target Server  </li>
+</ul>
+</li>
+<li><p>OS: Alpine Linux 3.15.1  </p>
+</li>
+</ul>
+<h2 id="Devices-IP-Addresses"><a href="#Devices-IP-Addresses" class="headerlink" title="Devices IP Addresses"></a>Devices IP Addresses</h2><ul>
+<li>Client  <ul>
+<li>IP: <code>192.168.10.2/24</code>  </li>
+<li>Gateway: <code>192.168.10.1</code></li>
+<li>MAC: <code>00:0c:29:06:c7:7e</code>  </li>
+</ul>
+</li>
+<li>Relay Server  <ul>
+<li>IP: <code>192.168.20.2/24</code>  </li>
+<li>Gateway: <code>192.168.20.1</code></li>
+<li>MAC: <code>00:0c:29:5b:89:3e</code>  </li>
+</ul>
+</li>
+<li>Target Server  <ul>
+<li>IP: <code>192.168.30.2/24</code>  </li>
+<li>Gateway: <code>192.168.30.1</code></li>
+<li>MAC: <code>00:0c:29:15:da:6a</code>  </li>
+</ul>
+</li>
+</ul>
+<h2 id="Router-Config"><a href="#Router-Config" class="headerlink" title="Router Config"></a>Router Config</h2><h3 id="Network-Interfaces"><a href="#Network-Interfaces" class="headerlink" title="Network Interfaces"></a>Network Interfaces</h3><ul>
+<li>eth0  <ul>
+<li>MAC: <code>00:0c:29:65:3c:a3</code></li>
+<li>IP: <code>192.168.10.1/24</code></li>
+</ul>
+</li>
+<li>eth1  <ul>
+<li>MAC: <code>00:0c:29:65:3c:ad</code></li>
+<li>IP: <code>192.168.20.1/24</code></li>
+</ul>
+</li>
+<li>eth2  <ul>
+<li>MAC: <code>00:0c:29:65:3c:b7</code></li>
+<li>IP: <code>192.168.30.1/24</code>  </li>
+</ul>
+</li>
+</ul>
+<h3 id="Enable-ipv4-forward"><a href="#Enable-ipv4-forward" class="headerlink" title="Enable ipv4_forward"></a>Enable ipv4_forward</h3>  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo 1 &gt; /proc/sys/net/ipv4/ip_forward</span><br></pre></td></tr></table></figure>
+<h3 id="Disable-source-address-verification-for-all-interfaces"><a href="#Disable-source-address-verification-for-all-interfaces" class="headerlink" title="Disable source address verification for all interfaces"></a>Disable source address verification for all interfaces</h3><p>  For linux-based router, refer to kernel sysctl parameter <code>rp_filter</code><br>  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">echo 0 &gt; /proc/sys/net/ipv4/conf/eth0/rp_filter</span><br><span class="line">echo 0 &gt; /proc/sys/net/ipv4/conf/eth1/rp_filter</span><br><span class="line">echo 0 &gt; /proc/sys/net/ipv4/conf/eth2/rp_filter</span><br></pre></td></tr></table></figure></p>
+<h2 id="Relay-Target-Server-Config"><a href="#Relay-Target-Server-Config" class="headerlink" title="Relay/Target Server Config"></a>Relay/Target Server Config</h2><h3 id="Both"><a href="#Both" class="headerlink" title="Both"></a>Both</h3><ul>
+<li>uninstall iptables &amp; install nftables</li>
+<li>enable ipv4_forward option for the kernel<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo 1 &gt; /proc/sys/net/ipv4/ip_forward</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="nftables-rules-for-the-relay-server"><a href="#nftables-rules-for-the-relay-server" class="headerlink" title="nftables rules for the relay server"></a>nftables rules for the relay server</h3>  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">table ip route &#123;</span><br><span class="line">        chain prerouting &#123;</span><br><span class="line">                type filter hook prerouting priority dstnat + 1; policy accept;</span><br><span class="line">                ip daddr 192.168.20.2 udp dport 10080 ip daddr set 192.168.30.2</span><br><span class="line">                ip daddr 192.168.20.2 tcp dport 10080 ip daddr set 192.168.30.2</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="nftables-rules-for-the-target-server"><a href="#nftables-rules-for-the-target-server" class="headerlink" title="nftables rules for the target server:"></a>nftables rules for the target server:</h3>  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">table ip raw &#123;</span><br><span class="line">        chain prerouting &#123;</span><br><span class="line">                type filter hook prerouting priority raw; policy accept;</span><br><span class="line">                ip daddr 192.168.30.2 udp dport 10080 notrack return</span><br><span class="line">                ip daddr 192.168.30.2 tcp dport 10080 notrack return</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br><span class="line">table ip route &#123;</span><br><span class="line">        chain output &#123;</span><br><span class="line">                type filter hook postrouting priority srcnat + 1; policy accept;</span><br><span class="line">                ip saddr 192.168.30.2 udp sport 10080 ip saddr set 192.168.20.2</span><br><span class="line">                ip saddr 192.168.30.2 tcp sport 10080 ip saddr set 192.168.20.2</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="How-to-test"><a href="#How-to-test" class="headerlink" title="How to test"></a>How to test</h2><ul>
+<li><p>On the target server, start a tcp/udp server  </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">nc -s 192.168.30.2 -l -p 10080 # for tcp</span><br><span class="line">nc -s 192.168.30.2 -l -u -p 10080 # for udp</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>On the client, start a tcp/udp client to server  </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">nc -s 192.168.10.2 -p 12345 192.168.20.2 10080 # for tcp</span><br><span class="line">nc -s 192.168.10.2 -u -p 12345 192.168.20.2 10080 # for udp</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="My-Testing"><a href="#My-Testing" class="headerlink" title="My Testing"></a>My Testing</h2><h3 id="Steps"><a href="#Steps" class="headerlink" title="Steps"></a>Steps</h3><ol>
+<li>The client establishes a TCP connection with the server</li>
+<li>The client sends “Hello” to the server</li>
+<li>The server replies “World” to the client</li>
+<li>The client terminates the TCP connection  </li>
+</ol>
+<h3 id="Packets-flow-captured-by-the-Router"><a href="#Packets-flow-captured-by-the-Router" class="headerlink" title="Packets flow captured by the Router"></a>Packets flow captured by the Router</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">router:~# tcpdump &#x27;(dst 192.168.10.2 &amp;&amp; dst port 12345) || (src 192.168.10.2 &amp;&amp; src port 12345)&#x27; -e</span><br><span class="line">tcpdump: verbose output suppressed, use -v[v]... for full protocol decode</span><br><span class="line">listening on eth0, link-type EN10MB (Ethernet), snapshot length 262144 bytes</span><br><span class="line">17:33:45.712751 00:0c:29:06:c7:7e (oui Unknown) &gt; 00:0c:29:65:3c:a3 (oui Unknown), ethertype IPv4 (0x0800), length 74: 192.168.10.2.12345 &gt; 192.168.20.2.10080: Flags [S], seq 4018363570, win 64240, options [mss 1460,sackOK,TS val 1510067563 ecr 0,nop,wscale 7], length 0</span><br><span class="line">17:33:45.712870 00:0c:29:65:3c:ad (oui Unknown) &gt; 00:0c:29:5b:89:3e (oui Unknown), ethertype IPv4 (0x0800), length 74: 192.168.10.2.12345 &gt; 192.168.20.2.10080: Flags [S], seq 4018363570, win 64240, options [mss 1460,sackOK,TS val 1510067563 ecr 0,nop,wscale 7], length 0</span><br><span class="line">17:33:45.713459 00:0c:29:5b:89:3e (oui Unknown) &gt; 00:0c:29:65:3c:ad (oui Unknown), ethertype IPv4 (0x0800), length 74: 192.168.10.2.12345 &gt; 192.168.30.2.10080: Flags [S], seq 4018363570, win 64240, options [mss 1460,sackOK,TS val 1510067563 ecr 0,nop,wscale 7], length 0</span><br><span class="line">17:33:45.713460 00:0c:29:65:3c:b7 (oui Unknown) &gt; 00:0c:29:15:da:6a (oui Unknown), ethertype IPv4 (0x0800), length 74: 192.168.10.2.12345 &gt; 192.168.30.2.10080: Flags [S], seq 4018363570, win 64240, options [mss 1460,sackOK,TS val 1510067563 ecr 0,nop,wscale 7], length 0</span><br><span class="line">17:33:45.713557 00:0c:29:15:da:6a (oui Unknown) &gt; 00:0c:29:65:3c:b7 (oui Unknown), ethertype IPv4 (0x0800), length 74: 192.168.20.2.10080 &gt; 192.168.10.2.12345: Flags [S.], seq 4008910075, ack 4018363571, win 65160, options [mss 1460,sackOK,TS val 3299425652 ecr 1510067563,nop,wscale 7], length 0</span><br><span class="line">17:33:45.713572 00:0c:29:65:3c:a3 (oui Unknown) &gt; 00:0c:29:06:c7:7e (oui Unknown), ethertype IPv4 (0x0800), length 74: 192.168.20.2.10080 &gt; 192.168.10.2.12345: Flags [S.], seq 4008910075, ack 4018363571, win 65160, options [mss 1460,sackOK,TS val 3299425652 ecr 1510067563,nop,wscale 7], length 0</span><br><span class="line">17:33:45.713802 00:0c:29:06:c7:7e (oui Unknown) &gt; 00:0c:29:65:3c:a3 (oui Unknown), ethertype IPv4 (0x0800), length 66: 192.168.10.2.12345 &gt; 192.168.20.2.10080: Flags [.], ack 1, win 502, options [nop,nop,TS val 1510067564 ecr 3299425652], length 0</span><br><span class="line">17:33:45.713907 00:0c:29:65:3c:ad (oui Unknown) &gt; 00:0c:29:5b:89:3e (oui Unknown), ethertype IPv4 (0x0800), length 66: 192.168.10.2.12345 &gt; 192.168.20.2.10080: Flags [.], ack 1, win 502, options [nop,nop,TS val 1510067564 ecr 3299425652], length 0</span><br><span class="line">17:33:45.714096 00:0c:29:5b:89:3e (oui Unknown) &gt; 00:0c:29:65:3c:ad (oui Unknown), ethertype IPv4 (0x0800), length 66: 192.168.10.2.12345 &gt; 192.168.30.2.10080: Flags [.], ack 4008910076, win 502, options [nop,nop,TS val 1510067564 ecr 3299425652], length 0</span><br><span class="line">17:33:45.714207 00:0c:29:65:3c:b7 (oui Unknown) &gt; 00:0c:29:15:da:6a (oui Unknown), ethertype IPv4 (0x0800), length 66: 192.168.10.2.12345 &gt; 192.168.30.2.10080: Flags [.], ack 1, win 502, options [nop,nop,TS val 1510067564 ecr 3299425652], length 0</span><br><span class="line">17:33:49.369321 00:0c:29:06:c7:7e (oui Unknown) &gt; 00:0c:29:65:3c:a3 (oui Unknown), ethertype IPv4 (0x0800), length 72: 192.168.10.2.12345 &gt; 192.168.20.2.10080: Flags [P.], seq 1:7, ack 1, win 502, options [nop,nop,TS val 1510071219 ecr 3299425652], length 6</span><br><span class="line">17:33:49.369451 00:0c:29:65:3c:ad (oui Unknown) &gt; 00:0c:29:5b:89:3e (oui Unknown), ethertype IPv4 (0x0800), length 72: 192.168.10.2.12345 &gt; 192.168.20.2.10080: Flags [P.], seq 1:7, ack 1, win 502, options [nop,nop,TS val 1510071219 ecr 3299425652], length 6</span><br><span class="line">17:33:49.369819 00:0c:29:5b:89:3e (oui Unknown) &gt; 00:0c:29:65:3c:ad (oui Unknown), ethertype IPv4 (0x0800), length 72: 192.168.10.2.12345 &gt; 192.168.30.2.10080: Flags [P.], seq 0:6, ack 1, win 502, options [nop,nop,TS val 1510071219 ecr 3299425652], length 6</span><br><span class="line">17:33:49.369820 00:0c:29:65:3c:b7 (oui Unknown) &gt; 00:0c:29:15:da:6a (oui Unknown), ethertype IPv4 (0x0800), length 72: 192.168.10.2.12345 &gt; 192.168.30.2.10080: Flags [P.], seq 0:6, ack 1, win 502, options [nop,nop,TS val 1510071219 ecr 3299425652], length 6</span><br><span class="line">17:33:49.370069 00:0c:29:15:da:6a (oui Unknown) &gt; 00:0c:29:65:3c:b7 (oui Unknown), ethertype IPv4 (0x0800), length 66: 192.168.20.2.10080 &gt; 192.168.10.2.12345: Flags [.], ack 7, win 510, options [nop,nop,TS val 3299429309 ecr 1510071219], length 0</span><br><span class="line">17:33:49.370087 00:0c:29:65:3c:a3 (oui Unknown) &gt; 00:0c:29:06:c7:7e (oui Unknown), ethertype IPv4 (0x0800), length 66: 192.168.20.2.10080 &gt; 192.168.10.2.12345: Flags [.], ack 7, win 510, options [nop,nop,TS val 3299429309 ecr 1510071219], length 0</span><br><span class="line">17:33:51.689563 00:0c:29:06:c7:7e (oui Unknown) &gt; 00:0c:29:65:3c:a3 (oui Unknown), ethertype IPv4 (0x0800), length 72: 192.168.10.2.12345 &gt; 192.168.20.2.10080: Flags [P.], seq 7:13, ack 1, win 502, options [nop,nop,TS val 1510073539 ecr 3299429309], length 6</span><br><span class="line">17:33:51.689687 00:0c:29:65:3c:ad (oui Unknown) &gt; 00:0c:29:5b:89:3e (oui Unknown), ethertype IPv4 (0x0800), length 72: 192.168.10.2.12345 &gt; 192.168.20.2.10080: Flags [P.], seq 7:13, ack 1, win 502, options [nop,nop,TS val 1510073539 ecr 3299429309], length 6</span><br><span class="line">17:33:51.690131 00:0c:29:5b:89:3e (oui Unknown) &gt; 00:0c:29:65:3c:ad (oui Unknown), ethertype IPv4 (0x0800), length 72: 192.168.10.2.12345 &gt; 192.168.30.2.10080: Flags [P.], seq 6:12, ack 1, win 502, options [nop,nop,TS val 1510073539 ecr 3299429309], length 6</span><br><span class="line">17:33:51.690131 00:0c:29:65:3c:b7 (oui Unknown) &gt; 00:0c:29:15:da:6a (oui Unknown), ethertype IPv4 (0x0800), length 72: 192.168.10.2.12345 &gt; 192.168.30.2.10080: Flags [P.], seq 6:12, ack 1, win 502, options [nop,nop,TS val 1510073539 ecr 3299429309], length 6</span><br><span class="line">17:33:51.690297 00:0c:29:15:da:6a (oui Unknown) &gt; 00:0c:29:65:3c:b7 (oui Unknown), ethertype IPv4 (0x0800), length 66: 192.168.20.2.10080 &gt; 192.168.10.2.12345: Flags [.], ack 13, win 510, options [nop,nop,TS val 3299431629 ecr 1510073539], length 0</span><br><span class="line">17:33:51.690305 00:0c:29:65:3c:a3 (oui Unknown) &gt; 00:0c:29:06:c7:7e (oui Unknown), ethertype IPv4 (0x0800), length 66: 192.168.20.2.10080 &gt; 192.168.10.2.12345: Flags [.], ack 13, win 510, options [nop,nop,TS val 3299431629 ecr 1510073539], length 0</span><br><span class="line">17:33:55.442820 00:0c:29:06:c7:7e (oui Unknown) &gt; 00:0c:29:65:3c:a3 (oui Unknown), ethertype IPv4 (0x0800), length 66: 192.168.10.2.12345 &gt; 192.168.20.2.10080: Flags [F.], seq 13, ack 1, win 502, options [nop,nop,TS val 1510077293 ecr 3299431629], length 0</span><br><span class="line">17:33:55.442935 00:0c:29:65:3c:ad (oui Unknown) &gt; 00:0c:29:5b:89:3e (oui Unknown), ethertype IPv4 (0x0800), length 66: 192.168.10.2.12345 &gt; 192.168.20.2.10080: Flags [F.], seq 13, ack 1, win 502, options [nop,nop,TS val 1510077293 ecr 3299431629], length 0</span><br><span class="line">17:33:55.443307 00:0c:29:5b:89:3e (oui Unknown) &gt; 00:0c:29:65:3c:ad (oui Unknown), ethertype IPv4 (0x0800), length 66: 192.168.10.2.12345 &gt; 192.168.30.2.10080: Flags [F.], seq 12, ack 1, win 502, options [nop,nop,TS val 1510077293 ecr 3299431629], length 0</span><br><span class="line">17:33:55.443307 00:0c:29:65:3c:b7 (oui Unknown) &gt; 00:0c:29:15:da:6a (oui Unknown), ethertype IPv4 (0x0800), length 66: 192.168.10.2.12345 &gt; 192.168.30.2.10080: Flags [F.], seq 12, ack 1, win 502, options [nop,nop,TS val 1510077293 ecr 3299431629], length 0</span><br><span class="line">17:33:55.486509 00:0c:29:15:da:6a (oui Unknown) &gt; 00:0c:29:65:3c:b7 (oui Unknown), ethertype IPv4 (0x0800), length 66: 192.168.20.2.10080 &gt; 192.168.10.2.12345: Flags [.], ack 14, win 510, options [nop,nop,TS val 3299435425 ecr 1510077293], length 0</span><br><span class="line">17:33:55.486527 00:0c:29:65:3c:a3 (oui Unknown) &gt; 00:0c:29:06:c7:7e (oui Unknown), ethertype IPv4 (0x0800), length 66: 192.168.20.2.10080 &gt; 192.168.10.2.12345: Flags [.], ack 14, win 510, options [nop,nop,TS val 3299435425 ecr 1510077293], length 0</span><br></pre></td></tr></table></figure>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/Network/" rel="tag"># Network</a>
+              <a href="/tags/Nftables/" rel="tag"># Nftables</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/03/14/SSH%20Reverse%20SOCKS%20Tunnel/" rel="prev" title="SSH Reverse SOCKS Tunnel">
+      <i class="fa fa-chevron-left"></i> SSH Reverse SOCKS Tunnel
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/12/02/Android%20as%20Server:%20Install%20Debian%20from%20Scratch/" rel="next" title="Debian on Android: Install Debian from Scratch">
+      Debian on Android: Install Debian from Scratch <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Background"><span class="nav-number">1.</span> <span class="nav-text">Background</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Purpose"><span class="nav-number">2.</span> <span class="nav-text">Purpose</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Note"><span class="nav-number">3.</span> <span class="nav-text">Note</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Environment"><span class="nav-number">4.</span> <span class="nav-text">Environment</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Devices-IP-Addresses"><span class="nav-number">5.</span> <span class="nav-text">Devices IP Addresses</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Router-Config"><span class="nav-number">6.</span> <span class="nav-text">Router Config</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Network-Interfaces"><span class="nav-number">6.1.</span> <span class="nav-text">Network Interfaces</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Enable-ipv4-forward"><span class="nav-number">6.2.</span> <span class="nav-text">Enable ipv4_forward</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Disable-source-address-verification-for-all-interfaces"><span class="nav-number">6.3.</span> <span class="nav-text">Disable source address verification for all interfaces</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Relay-Target-Server-Config"><span class="nav-number">7.</span> <span class="nav-text">Relay&#x2F;Target Server Config</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Both"><span class="nav-number">7.1.</span> <span class="nav-text">Both</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#nftables-rules-for-the-relay-server"><span class="nav-number">7.2.</span> <span class="nav-text">nftables rules for the relay server</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#nftables-rules-for-the-target-server"><span class="nav-number">7.3.</span> <span class="nav-text">nftables rules for the target server:</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#How-to-test"><span class="nav-number">8.</span> <span class="nav-text">How to test</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#My-Testing"><span class="nav-number">9.</span> <span class="nav-text">My Testing</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Steps"><span class="nav-number">9.1.</span> <span class="nav-text">Steps</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Packets-flow-captured-by-the-Router"><span class="nav-number">9.2.</span> <span class="nav-text">Packets flow captured by the Router</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Liu Peiyuan"
+      src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/1639911209663.jpg">
+  <p class="site-author-name" itemprop="name">Liu Peiyuan</p>
+  <div class="site-description" itemprop="description">刘沛源的博客</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">46</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lpypl" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lpypl" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lpy.henu@gmail.com" title="E-Mail → mailto:lpy.henu@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://t.me/lpypl" title="Telegram → https:&#x2F;&#x2F;t.me&#x2F;lpypl" rel="noopener" target="_blank"><i class="fab fa-telegram fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Liu Peiyuan</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+      <span class="post-meta-item-text">站点总字数：</span>
+    <span title="站点总字数">67k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">2:02</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://lpypl.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "https://blog.lpypl.top/2022/03/24/Relay%20TCP%20upload%20traffic/";
+    this.page.identifier = "2022/03/24/Relay TCP upload traffic/";
+    this.page.title = "Relay TCP upload traffic and make download traffic go directly to the client";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://lpypl.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.lpypl.top","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"disqus","storage":true,"lazyload":false,"nav":{"disqus":{"text":"Load Disqus","order":-1},"gitalk":{"order":-2}},"activeClass":"disqus"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="达成的目标在Ubuntu Server 20.04 虚拟机当中添加了两块虚拟网卡。一块VMWare虚拟网卡以桥接模式使用电脑的网线接口直接与树莓派通信，可拥有独立于物理网卡的Mac地址和IP地址，同时在树莓派上测试了Macvlan虚拟网卡，Macvlan虚拟网卡有多种工作模式，其中桥接模式可使虚拟网络接口借助物理接口与外界直接通信。另一块VMWare虚拟网卡配置为NAT模式，借助主机网络访问互联网">
+<meta property="og:type" content="article">
+<meta property="og:title" content="VMWare-UbuntuServer2004网络配置记录">
+<meta property="og:url" content="https://blog.lpypl.top/2021/07/24/VMWare-UbuntuServer2004%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE%E8%AE%B0%E5%BD%95/index.html">
+<meta property="og:site_name" content="Yuan&#39;s blog">
+<meta property="og:description" content="达成的目标在Ubuntu Server 20.04 虚拟机当中添加了两块虚拟网卡。一块VMWare虚拟网卡以桥接模式使用电脑的网线接口直接与树莓派通信，可拥有独立于物理网卡的Mac地址和IP地址，同时在树莓派上测试了Macvlan虚拟网卡，Macvlan虚拟网卡有多种工作模式，其中桥接模式可使虚拟网络接口借助物理接口与外界直接通信。另一块VMWare虚拟网卡配置为NAT模式，借助主机网络访问互联网">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210725011524.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210725012623.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210725014830.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210725014854.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210725124934.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210725023126.png">
+<meta property="article:published_time" content="2021-07-24T06:00:00.000Z">
+<meta property="article:modified_time" content="2026-02-25T08:25:44.674Z">
+<meta property="article:author" content="Liu Peiyuan">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="Network">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210725011524.png">
+
+<link rel="canonical" href="https://blog.lpypl.top/2021/07/24/VMWare-UbuntuServer2004%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE%E8%AE%B0%E5%BD%95/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>VMWare-UbuntuServer2004网络配置记录 | Yuan's blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-190455776-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-190455776-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Yuan's blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Yuan's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">刘沛源的博客</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-rss">
+
+    <a href="/atom.xml" rel="section"><i class="fa fa-rss fa-fw"></i>RSS</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.lpypl.top/2021/07/24/VMWare-UbuntuServer2004%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE%E8%AE%B0%E5%BD%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/1639911209663.jpg">
+      <meta itemprop="name" content="Liu Peiyuan">
+      <meta itemprop="description" content="刘沛源的博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Yuan's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          VMWare-UbuntuServer2004网络配置记录
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-07-24 14:00:00" itemprop="dateCreated datePublished" datetime="2021-07-24T14:00:00+08:00">2021-07-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2026-02-25 16:25:44" itemprop="dateModified" datetime="2026-02-25T16:25:44+08:00">2026-02-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Tutorial/" itemprop="url" rel="index"><span itemprop="name">Tutorial</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus：</span>
+    
+    <a title="disqus" href="/2021/07/24/VMWare-UbuntuServer2004%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE%E8%AE%B0%E5%BD%95/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2021/07/24/VMWare-UbuntuServer2004网络配置记录/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.9k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="达成的目标"><a href="#达成的目标" class="headerlink" title="达成的目标"></a>达成的目标</h2><p>在Ubuntu Server 20.04 虚拟机当中添加了两块虚拟网卡。一块VMWare虚拟网卡以桥接模式使用电脑的网线接口直接与树莓派通信，可拥有独立于物理网卡的Mac地址和IP地址，同时在树莓派上测试了Macvlan虚拟网卡，Macvlan虚拟网卡有多种工作模式，其中桥接模式可使虚拟网络接口借助物理接口与外界直接通信。另一块VMWare虚拟网卡配置为NAT模式，借助主机网络访问互联网。</p>
+<h2 id="主机配置"><a href="#主机配置" class="headerlink" title="主机配置"></a>主机配置</h2><h3 id="桥接网络配置"><a href="#桥接网络配置" class="headerlink" title="桥接网络配置"></a>桥接网络配置</h3><p>VMWare默认的桥接网络会自动选择用于桥接的实体网卡，如果需要指定通过网线接口而非无线网卡桥接，就需要专门进行配置。在虚拟网络编辑器当中为默认桥接网络指定网卡即可。<br><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210725011524.png" alt=""></p>
+<h3 id="NAT网络配置"><a href="#NAT网络配置" class="headerlink" title="NAT网络配置"></a>NAT网络配置</h3><p>NAT网卡无需特别配置，默认的配置已经开启了DHCP，但是需要注意的是网关可能不是 <code>192.168.227.1</code>（以我的IP为例说明） ，我原本在虚拟机中配置了静态地址，结果无法访问互联网，也无法ping通 <code>192.168.227.1</code>，后来改成了 DHCP 模式，发现虚拟机自动配置的网关是 <code>192.168.227.2</code>，而Windows中可以看到 <code>VMware Virtual Ethernet Adapter for VMnet8</code> 的IP是 <code>192.168.227.1</code>，值得关注的还有 <code>IPv4 WINS 服务器: 192.168.227.2</code>，通过查看虚拟机上自动经DHCP配置好的信息，发现虚拟机的网关和DNS服务器恰好都是 <code>192.168.227.2</code>，因此如果想要配置静态IP，需要注意网关和DNS服务器的配置。我所采用的方法是在开启DHCP Client的同时再额外配置一个自定义的IP地址，这样既可以在局域网通过自定义IP地址访问虚拟机，也可以使虚拟机自动配置网关和DNS服务器。</p>
+<p>虚拟机ping不通主机是因为Windows防护墙，关掉就能ping通了，不过即使能ping通，也无法将 <code>192.168.227.1</code> 配置为网关来访问互联网，原因上面说了。</p>
+<h4 id="VMware-Virtual-Ethernet-Adapter-for-VMnet8-网络属性"><a href="#VMware-Virtual-Ethernet-Adapter-for-VMnet8-网络属性" class="headerlink" title="VMware Virtual Ethernet Adapter for VMnet8 网络属性"></a>VMware Virtual Ethernet Adapter for VMnet8 网络属性</h4><p><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210725012623.png" alt=""></p>
+<h4 id="虚拟机当中由DHCP-Client配置的-DNS-以及网关"><a href="#虚拟机当中由DHCP-Client配置的-DNS-以及网关" class="headerlink" title="虚拟机当中由DHCP Client配置的 DNS 以及网关"></a>虚拟机当中由DHCP Client配置的 DNS 以及网关</h4><p><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210725014830.png" alt=""></p>
+<p><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210725014854.png" alt=""></p>
+<h4 id="补充说明"><a href="#补充说明" class="headerlink" title="补充说明"></a>补充说明</h4><p>后来发现VMWare网络编辑器里面是能看到网关信息的，确实是 <code>192.168.227.2</code>，如果想要手动配置，就按这个信息配置。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210725124934.png" alt=""></p>
+<h2 id="虚拟机配置"><a href="#虚拟机配置" class="headerlink" title="虚拟机配置"></a>虚拟机配置</h2><h3 id="Ubuntu-Server-20-04-的网络配置方法"><a href="#Ubuntu-Server-20-04-的网络配置方法" class="headerlink" title="Ubuntu Server 20.04 的网络配置方法"></a>Ubuntu Server 20.04 的网络配置方法</h3><p>Ubuntu Server 20.04 使用 <code>netplan</code> 进行网络管理（总是旧的还不熟悉就换了，，）,还默认启用 <code>systemd-resolve</code> 进行域名解析，所以网络配置文件不再是 <code>/etc/network/interfaces</code>，DNS配置文件也不再是 <code>/etc/resolv.conf</code>。</p>
+<p>网络配置文件是 <code>/etc/netplan/*</code>，我就直接修改了安装时生成的文件 <code>/etc/netplan/00-installer-config.yaml</code>，修改完毕之后需要执行 <code>sudo netplan try</code> 命令检测配置并按Enter应用配置。</p>
+<p>DNS配置文件我没有仔细查，看<code>systemd-resolve</code>文档即可，不过<code>/etc/resolv.conf</code>的开头是这样的，最好不要乱改。顺便说一下，查看DNS服务器的命令是 <code>resolvectl status</code>。<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># This file is managed by man:systemd-resolved(8). Do not edit.</span><br></pre></td></tr></table></figure></p>
+<h3 id="我的配置文件"><a href="#我的配置文件" class="headerlink" title="我的配置文件"></a>我的配置文件</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"># This is the network config written by &#x27;subiquity&#x27;</span><br><span class="line">network:</span><br><span class="line">  ethernets:</span><br><span class="line">    ens33:</span><br><span class="line">      addresses: [192.168.10.11/24]</span><br><span class="line">      #gateway4: 192.168.10.1</span><br><span class="line">      #nameservers:</span><br><span class="line">      #  addresses: [192.168.10.1]</span><br><span class="line">      dhcp4: no</span><br><span class="line">    ens38:</span><br><span class="line">      addresses: [192.168.227.5/24]</span><br><span class="line">      dhcp4: yes</span><br><span class="line">  version: 2</span><br></pre></td></tr></table></figure>
+<ul>
+<li>其中 <code>ens33</code> 是桥接网卡，配置文件中仅为其配置了静态IP地址，并关闭了dhcpv4，其余的网关、DNS等配置被注释掉是因为如果保留的话，<code>netplan</code> 将为根据设定的网关添加默认路由，而且该默认路由的优先级比 <code>ens38</code> 的默认路由要高，导致各种外网请求走没有互联网连接的 <code>ens33</code>。这里只为 <code>ens33</code> 配置IP，不配置网关，就可以避免 <code>netplan</code> 添加相应的默认路由。</li>
+<li><code>ens38</code> 本来采取的是纯静态配置，结果无法访问互联网，原因在上面讨论了，这里采用了较为稳妥的 <code>DHCP + 静态IP</code> 的方法，既能通过固定IP便捷访问，又能借助DHCP自动配置网关和DNS。</li>
+</ul>
+<h2 id="树莓派配置MacVLAN虚拟接口"><a href="#树莓派配置MacVLAN虚拟接口" class="headerlink" title="树莓派配置MacVLAN虚拟接口"></a>树莓派配置MacVLAN虚拟接口</h2><p>之前使用路由器多拨时接触过MacVLAN，感觉十分神奇，居然可以通过一个实体网络接口拓展出众多虚拟接口，并且每个都可以拥有自己的Mac地址和IP，而多拨原理就是每个虚拟接口都拨号，然后带宽叠加。</p>
+<p>最近了解到相关虚拟技术是由Linux内核提供支持的，从最初的TUN/TAP，发展到后来的MacVLAN和MacVTap，原本我是打算创建一个MacVTap虚拟接口的，结果好像报错说不支持该类型，就用了MacVLAN，并顺利为虚拟接口配置了IP，经测试可以连通。</p>
+<p>配置工具就是一系列 ip 命令，在此不再赘述。下图当中的 <code>macvlan0@eth0</code> 即为基于 <code>eth0</code> 的虚拟网络接口，需要注意的一点是，在使用 ip 命令配置的过程中，使用 <code>macvlan0</code> 引用虚拟网卡，不需要带也不能带 <code>@eth0</code></p>
+<p><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20210725023126.png" alt=""></p>
+<h2 id="为什么网络接口、交换机可以虚拟化？"><a href="#为什么网络接口、交换机可以虚拟化？" class="headerlink" title="为什么网络接口、交换机可以虚拟化？"></a>为什么网络接口、交换机可以虚拟化？</h2><p>以前没有仔细考虑过这件事情，感觉很神奇，在这里简单地说一下现在的想法。</p>
+<p>先来回顾一下交换机工作原理：</p>
+<blockquote>
+<p>交换机工作于OSI参考模型中的第二层（数据链路层），交换机的工作依赖于对MAC地址的识别（所有的网络设备都有一个唯一的MAC地址，通常是由厂商直接烧录进网卡中）。<br>当交换机从其某个端口收到一个数据包时，先读取包头中的源MAC地址（即发送该数据包的设备网卡的MAC地址），将该MAC地址和端口对应起来添加到交换机内存里的地址表中；然后再读取包头中的目的MAC地址，对照内存里的地址表看该MAC地址与哪个端口对应，如果地址表中有该MAC地址的对应端口，则将该数据包直接复制到对应的端口上，如果没有找到，则将该数据帧作为一个广播帧发送到所有的端口，对应的MAC地址设备会自动接受该帧数据，同时，交换机将接受该帧数据的端口与这个目的MAC地址对应起来放入内存中的地址表中。</p>
+</blockquote>
+<p>简单地说交换机的作用就是转发MAC帧，物理交换机可以用于在一些物理接口之间转发MAC帧。</p>
+<p>那么网络接口如何实现虚拟化呢？在没有虚拟接口的情况下，一个网卡对应一个MAC地址，交换机按照转发表，把对应的MAC帧发送到特定的物理端口。只要在此基础上，允许一个物理网卡对应多个MAC地址，那么每个MAC地址都可以配置一个虚拟接口，物理网卡所属机器在拿到MAC帧之后，再根据具体内容分发到虚拟接口即可。而一个物理网卡对应多个MAC地址其实只要允许交换机转发表中一个接口对应多个表项即可。</p>
+<p>上面说的是数据链路层的虚拟化，只要实现了数据链路层的虚拟化，那么每个虚拟接口都可以独立地实现局域网通信了，它们是物理端口还是虚拟端口对于上层协议栈来说其实是透明的。</p>
+<p>如果接口是用软件虚拟的，那么自然地，就可以同样利用软件在这些虚拟接口间转发MAC帧，这些软件就相当于虚拟交换机了？</p>
+<h2 id="参考资料-amp-相关链接"><a href="#参考资料-amp-相关链接" class="headerlink" title="参考资料&amp;相关链接"></a>参考资料&amp;相关链接</h2><p><a target="_blank" rel="noopener" href="https://suhu0426.github.io/Web/Presentation/20150120/index.html">Virtual networking: TUN/TAP, MacVLAN, and MacVTap</a><br><a target="_blank" rel="noopener" href="http://kms2.h3c.com/View.aspx?id=40366">虚拟交换机（vSwitch）原理及配置</a><br><a target="_blank" rel="noopener" href="https://www.openvswitch.org/">Open vSwitch</a><br><a target="_blank" rel="noopener" href="https://virt.kernelnewbies.org/MacVTap">MacVTap - Linux Virtualization Wiki</a><br><a target="_blank" rel="noopener" href="https://sreeninet.wordpress.com/2016/05/29/macvlan-and-ipvlan/">Macvlan and IPvlan basics</a>  </p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/Network/" rel="tag"># Network</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/07/10/Win10%E9%85%8D%E7%BD%AE%E8%BF%87%E7%A8%8B%E8%AE%B0%E5%BD%95/" rel="prev" title="Win10配置过程记录">
+      <i class="fa fa-chevron-left"></i> Win10配置过程记录
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/07/29/Win10%E7%A6%81%E7%94%A8Ctrl+Space%E4%B8%AD%E8%8B%B1%E6%96%87%E5%88%87%E6%8D%A2%E5%BF%AB%E6%8D%B7%E9%94%AE/" rel="next" title="Win10禁用Ctrl+Space中英文切换快捷键">
+      Win10禁用Ctrl+Space中英文切换快捷键 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BE%BE%E6%88%90%E7%9A%84%E7%9B%AE%E6%A0%87"><span class="nav-number">1.</span> <span class="nav-text">达成的目标</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BB%E6%9C%BA%E9%85%8D%E7%BD%AE"><span class="nav-number">2.</span> <span class="nav-text">主机配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A1%A5%E6%8E%A5%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE"><span class="nav-number">2.1.</span> <span class="nav-text">桥接网络配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NAT%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE"><span class="nav-number">2.2.</span> <span class="nav-text">NAT网络配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#VMware-Virtual-Ethernet-Adapter-for-VMnet8-%E7%BD%91%E7%BB%9C%E5%B1%9E%E6%80%A7"><span class="nav-number">2.2.1.</span> <span class="nav-text">VMware Virtual Ethernet Adapter for VMnet8 网络属性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%BD%93%E4%B8%AD%E7%94%B1DHCP-Client%E9%85%8D%E7%BD%AE%E7%9A%84-DNS-%E4%BB%A5%E5%8F%8A%E7%BD%91%E5%85%B3"><span class="nav-number">2.2.2.</span> <span class="nav-text">虚拟机当中由DHCP Client配置的 DNS 以及网关</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A1%A5%E5%85%85%E8%AF%B4%E6%98%8E"><span class="nav-number">2.2.3.</span> <span class="nav-text">补充说明</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E6%9C%BA%E9%85%8D%E7%BD%AE"><span class="nav-number">3.</span> <span class="nav-text">虚拟机配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Ubuntu-Server-20-04-%E7%9A%84%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE%E6%96%B9%E6%B3%95"><span class="nav-number">3.1.</span> <span class="nav-text">Ubuntu Server 20.04 的网络配置方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%88%91%E7%9A%84%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="nav-number">3.2.</span> <span class="nav-text">我的配置文件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%91%E8%8E%93%E6%B4%BE%E9%85%8D%E7%BD%AEMacVLAN%E8%99%9A%E6%8B%9F%E6%8E%A5%E5%8F%A3"><span class="nav-number">4.</span> <span class="nav-text">树莓派配置MacVLAN虚拟接口</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E7%BD%91%E7%BB%9C%E6%8E%A5%E5%8F%A3%E3%80%81%E4%BA%A4%E6%8D%A2%E6%9C%BA%E5%8F%AF%E4%BB%A5%E8%99%9A%E6%8B%9F%E5%8C%96%EF%BC%9F"><span class="nav-number">5.</span> <span class="nav-text">为什么网络接口、交换机可以虚拟化？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99-amp-%E7%9B%B8%E5%85%B3%E9%93%BE%E6%8E%A5"><span class="nav-number">6.</span> <span class="nav-text">参考资料&amp;相关链接</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Liu Peiyuan"
+      src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/1639911209663.jpg">
+  <p class="site-author-name" itemprop="name">Liu Peiyuan</p>
+  <div class="site-description" itemprop="description">刘沛源的博客</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">46</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lpypl" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lpypl" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lpy.henu@gmail.com" title="E-Mail → mailto:lpy.henu@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://t.me/lpypl" title="Telegram → https:&#x2F;&#x2F;t.me&#x2F;lpypl" rel="noopener" target="_blank"><i class="fab fa-telegram fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Liu Peiyuan</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+      <span class="post-meta-item-text">站点总字数：</span>
+    <span title="站点总字数">67k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">2:02</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://lpypl.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "https://blog.lpypl.top/2021/07/24/VMWare-UbuntuServer2004%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE%E8%AE%B0%E5%BD%95/";
+    this.page.identifier = "2021/07/24/VMWare-UbuntuServer2004网络配置记录/";
+    this.page.title = "VMWare-UbuntuServer2004网络配置记录";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://lpypl.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

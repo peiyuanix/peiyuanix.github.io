@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.lpypl.top","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"disqus","storage":true,"lazyload":false,"nav":{"disqus":{"text":"Load Disqus","order":-1},"gitalk":{"order":-2}},"activeClass":"disqus"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="简介使用Linux桌面环境也两三年了，也曾几次打开介绍Xorg的文章，不过基本都是简单看一眼就过去了，这次打算好好看下基于Xorg的Liunx桌面环境总体构成、运行原理。 X基本知识基本术语X: 即 X Window System，提供了用于构建GUI系统所需的基本框架或原语，这仅仅是一个规范，并不是实现X11: X的最新版本Xorg: 目前最流行的X实现下文可能会混用这些词汇，但很多地方可以认为">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于Xorg的Linux桌面环境（一）">
+<meta property="og:url" content="https://blog.lpypl.top/2020/12/28/%E5%9F%BA%E4%BA%8EXorg%E7%9A%84Linux%E6%A1%8C%E9%9D%A2%E7%8E%AF%E5%A2%83%EF%BC%88%E4%B8%80%EF%BC%89/index.html">
+<meta property="og:site_name" content="Yuan&#39;s blog">
+<meta property="og:description" content="简介使用Linux桌面环境也两三年了，也曾几次打开介绍Xorg的文章，不过基本都是简单看一眼就过去了，这次打算好好看下基于Xorg的Liunx桌面环境总体构成、运行原理。 X基本知识基本术语X: 即 X Window System，提供了用于构建GUI系统所需的基本框架或原语，这仅仅是一个规范，并不是实现X11: X的最新版本Xorg: 目前最流行的X实现下文可能会混用这些词汇，但很多地方可以认为">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20201229235024.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20201230023346.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20201230030200.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20201230031248.png">
+<meta property="article:published_time" content="2020-12-28T19:00:00.000Z">
+<meta property="article:modified_time" content="2026-02-25T08:25:44.673Z">
+<meta property="article:author" content="Liu Peiyuan">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="X">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20201229235024.png">
+
+<link rel="canonical" href="https://blog.lpypl.top/2020/12/28/%E5%9F%BA%E4%BA%8EXorg%E7%9A%84Linux%E6%A1%8C%E9%9D%A2%E7%8E%AF%E5%A2%83%EF%BC%88%E4%B8%80%EF%BC%89/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>基于Xorg的Linux桌面环境（一） | Yuan's blog</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-190455776-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-190455776-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Yuan's blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Yuan's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">刘沛源的博客</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-rss">
+
+    <a href="/atom.xml" rel="section"><i class="fa fa-rss fa-fw"></i>RSS</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.lpypl.top/2020/12/28/%E5%9F%BA%E4%BA%8EXorg%E7%9A%84Linux%E6%A1%8C%E9%9D%A2%E7%8E%AF%E5%A2%83%EF%BC%88%E4%B8%80%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/1639911209663.jpg">
+      <meta itemprop="name" content="Liu Peiyuan">
+      <meta itemprop="description" content="刘沛源的博客">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Yuan's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          基于Xorg的Linux桌面环境（一）
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-12-29 03:00:00" itemprop="dateCreated datePublished" datetime="2020-12-29T03:00:00+08:00">2020-12-29</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2026-02-25 16:25:44" itemprop="dateModified" datetime="2026-02-25T16:25:44+08:00">2026-02-25</time>
+              </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus：</span>
+    
+    <a title="disqus" href="/2020/12/28/%E5%9F%BA%E4%BA%8EXorg%E7%9A%84Linux%E6%A1%8C%E9%9D%A2%E7%8E%AF%E5%A2%83%EF%BC%88%E4%B8%80%EF%BC%89/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2020/12/28/基于Xorg的Linux桌面环境（一）/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.6k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>使用Linux桌面环境也两三年了，也曾几次打开介绍Xorg的文章，不过基本都是简单看一眼就过去了，这次打算好好看下基于Xorg的Liunx桌面环境总体构成、运行原理。</p>
+<h2 id="X基本知识"><a href="#X基本知识" class="headerlink" title="X基本知识"></a>X基本知识</h2><h3 id="基本术语"><a href="#基本术语" class="headerlink" title="基本术语"></a>基本术语</h3><p>X: 即 X Window System，提供了用于构建GUI系统所需的基本框架或原语，这仅仅是一个规范，并不是实现<br>X11: X的最新版本<br>Xorg: 目前最流行的X实现<br>下文可能会混用这些词汇，但很多地方可以认为泛指X Window System  </p>
+<h3 id="组成部分"><a href="#组成部分" class="headerlink" title="组成部分"></a>组成部分</h3><p>X采用C/S架构，由 <code>X Server</code> 和 <code>X Client</code> 组成，两者之间使用 <code>X Protocol</code> 进行通信。<br><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20201229235024.png" alt="Xorg C/S" height="400"/></p>
+<h3 id="C-S架构解释"><a href="#C-S架构解释" class="headerlink" title="C/S架构解释"></a>C/S架构解释</h3><p>在Xorg中，Server 和 Client划分可能并不是那么合乎人们的日常认识。  </p>
+<ol>
+<li>X Server运行在用户端，X Server控制显示器以及外设资源，但是它并不知道要绘制什么样的画面。  </li>
+<li>X Client是应用程序，可以运行在远程服务器上，它本身并没有显示器资源，它与X Server通信以指示X Server绘制画面，还可以接收X Server发过来的外设操作指令。</li>
+<li>这里的C/S划分是从Xorg的视角说的，根据显示器资源和外设资源而定的，X Server拥有显示器资源和外设资源，并向X Client（应用程序）提供服务。</li>
+</ol>
+<h2 id="启动一个X-Server并将X-Client连接到X-Server"><a href="#启动一个X-Server并将X-Client连接到X-Server" class="headerlink" title="启动一个X Server并将X Client连接到X Server"></a>启动一个X Server并将X Client连接到X Server</h2><p>平时使用的桌面环境都具有开箱即用的桌面环境，对用户屏蔽了Xorg的工作细节，因此这一次我决定使用Arch Linux从零配置基于Xorg的GUI环境。</p>
+<h3 id="系统安装"><a href="#系统安装" class="headerlink" title="系统安装"></a>系统安装</h3><p>Arch Linux KVM 虚拟机，基本都是默认配置，按照<a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/installation_guide">官方安装指引教程</a>安装即可，网卡也是默认的桥接模式。  </p>
+<p>关于联网有一点需要注意：在安装好系统之后先不要重启，要在有网环境下在目标系统中安装好 <code>dhcpcd</code>，<br>然后重启进入系统，执行如下命令，再重启，系统就会自动通过<code>dhcpcd</code>为连接到局域网的网卡分配ip了</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">systemctl <span class="built_in">enable</span> dhcpd</span><br><span class="line">systemctl start dhcpd</span><br></pre></td></tr></table></figure>
+<p>至于添加用户、配置sudo这种事情就不多说了。</p>
+<h3 id="Xorg安装"><a href="#Xorg安装" class="headerlink" title="Xorg安装"></a>Xorg安装</h3><p>按照<a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/Xorg">Arch官方指引</a>进行即可</p>
+<h3 id="启动X-Server"><a href="#启动X-Server" class="headerlink" title="启动X Server"></a>启动X Server</h3><p>启动X Server，此处仅指定了一个<code>DisplayNumber</code>参数。  </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">X :0</span><br></pre></td></tr></table></figure>
+<p>启动之后，X Server就会接管显示器和外设资源，并为X Client提供服务。在执行完成上述命令之后，<br>由于还没有X Client连接至此X Server，虚拟机当中的虚拟显示器会黑屏，无法继续操作，需要有X Client连接上才能恢复（一旦连接，X Client会指示X Server进行UI绘制，然后就可以操作X Client对应的应用程序了）</p>
+<h3 id="手动在本地启动X-Client并连接至X-Server"><a href="#手动在本地启动X-Client并连接至X-Server" class="headerlink" title="手动在本地启动X Client并连接至X Server"></a>手动在本地启动X Client并连接至X Server</h3><p>启动X Server的时候，显示器资源已经被X Server接管了，原本的终端应该已经无法正常使用了，可以使用ssh(当然，在此之前需要安装openssh并启动sshd)连接到虚拟机进行下面的操作。说起连接虚拟机就需要获取虚拟机IP，我所使用的KVM虚拟机可以在主机中用下面的命令获取已分配的IP：<code>virsh net-dhcp-leases default</code></p>
+<p>要想启动X Client，首先要配置<code>DISPALY</code>环境变量：<code>[Address]:{DisplayNumber}.{ScreenNumber}</code> ,<br><code>ScreenNumber</code>的具体含义暂不深究，这里使用0是可行的</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> DISPLAY=:0.0</span><br></pre></td></tr></table></figure>
+<p>然后就可以启动X Client了，可以直接启动 <code>xterm</code>，也可以启动 <code>twm</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">xterm &amp;</span><br><span class="line">twm &amp;</span><br></pre></td></tr></table></figure>
+<p>此时原本被X Server控制的屏幕应该就会出现上面启动的X Client了。<br>至此，我们已经使用手动的方式启动X Server，并将X Client连接至X Server了，似乎Xorg已经不再那么神秘了呢！  </p>
+<h2 id="X-Forwarding"><a href="#X-Forwarding" class="headerlink" title="X Forwarding"></a>X Forwarding</h2><p>上面实现了本地X Server和本地X Client之间的连接，那么如何通过网络连接处于不同设备的X Server和X Client呢？</p>
+<p>一种方式是使用ssh 的 X Forwarding功能（有没有其它办法我也不知道）。</p>
+<p>接下来将说明如何通过X Forwarding功能在我的Ubuntu系统上运行位于Arch虚拟机当中的xterm程序。<br>架构如下。</p>
+<ol>
+<li>远程机器需要具备运行X Client的环境，但是不需要具备桌面环境  </li>
+<li>本地机器需要具有显示器等运行X Server所需要的资源</li>
+</ol>
+<p><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20201230023346.png" width="500" alt="X Forwarding"></p>
+<h3 id="配置Arch虚拟机"><a href="#配置Arch虚拟机" class="headerlink" title="配置Arch虚拟机"></a>配置Arch虚拟机</h3><h4 id="启用sshd的X-Forwarding功能"><a href="#启用sshd的X-Forwarding功能" class="headerlink" title="启用sshd的X Forwarding功能"></a>启用sshd的X Forwarding功能</h4><p>修改 <code>/etc/ssh/sshd_config</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">AllowTcpForwarding yes</span><br><span class="line">...</span><br><span class="line">X11Forwarding yes</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>然后重启sshd服务</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl restart sshd </span><br></pre></td></tr></table></figure>
+<p>安装<a target="_blank" rel="noopener" href="https://www.x.org/releases/X11R7.7/doc/man/man1/xauth.1.xhtml">xauth</a>程序，用于X Forwarding，没有这个软件就无法正常使用</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo pacman -S xorg-xauth </span><br></pre></td></tr></table></figure>
+<h3 id="在Ubuntu桌面环境下上使用ssh-X-Forwarding启动虚拟机中的xterm"><a href="#在Ubuntu桌面环境下上使用ssh-X-Forwarding启动虚拟机中的xterm" class="headerlink" title="在Ubuntu桌面环境下上使用ssh X Forwarding启动虚拟机中的xterm"></a>在Ubuntu桌面环境下上使用ssh X Forwarding启动虚拟机中的xterm</h3><p>使用ssh -X连接至remote Arch</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh -X user@host</span><br></pre></td></tr></table></figure>
+<p><img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20201230030200.png" alt="">  </p>
+<p>可以看到，在X Forawding正常启动的情况下，remote Arch的 <code>DISPLAY</code> 变量已经被设置好了</p>
+<p>然后就可以启动X Client了</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xterm</span><br></pre></td></tr></table></figure>
+<p>不仅xterm，firefox这样的程序也是可以启动的<img src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/20201230031248.png" alt="remote Firefox"></p>
+<h3 id="X-Forwarding与VNC、RDP技术的比较"><a href="#X-Forwarding与VNC、RDP技术的比较" class="headerlink" title="X Forwarding与VNC、RDP技术的比较"></a>X Forwarding与VNC、RDP技术的比较</h3><p>很遗憾，经过查阅资料，得知 <code>X Forwarding</code> 应用领域和可靠性不如另外两种技术。</p>
+<ol>
+<li><p>X Forwarding对的带宽要求比另外两者高，因为X Client需要发送所有的绘制指令至X Server，然后由X Server绘制，而VNC技术直接传输图像，从理论上来说X Forward应该需要更少的网络资源才对，而实际上绘制指令往往比较随机，难以有效压缩，但VNC技术能有效利用现有数据压缩技术减少数据量，参考<a target="_blank" rel="noopener" href="https://bharath.lohray.com/weblog/vnc-vs-x11/]">这篇博文</a></p>
+</li>
+<li><p>X Forwarding本身没有断线重连机制，即使可以使用screen对终端进行断线重连，也无法恢复经过X Forwarding的应用程序，参考<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/X_Window_System#Network">维基百科</a></p>
+<blockquote>
+<p>An X client cannot generally be detached from one server and reattached to another unless its code specifically provides for it (Emacs is one of the few common programs with this ability). As such, moving an entire session from one X server to another is generally not possible. </p>
+</blockquote>
+</li>
+</ol>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://www.x.org/releases/X11R7.7/doc/man/man1/index.xhtml">Xorg-Utils: Xorg体系中的一些命令行工具</a></li>
+<li><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/Xorg">Xorg-ArchWiki</a></li>
+<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/X_Window_System">X Window System-Wikipedia</a></li>
+<li><a target="_blank" rel="noopener" href="https://bharath.lohray.com/weblog/vnc-vs-x11/">VNC vs X11</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/X/" rel="tag"># X</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/12/22/Leetcode112-%E4%B9%B0%E5%8D%96%E8%82%A1%E7%A5%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E6%97%B6%E6%9C%BAII/" rel="prev" title="Leetcode112-买卖股票的最佳时机 II">
+      <i class="fa fa-chevron-left"></i> Leetcode112-买卖股票的最佳时机 II
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/12/29/%E5%9F%BA%E4%BA%8EXorg%E7%9A%84Linux%E6%A1%8C%E9%9D%A2%E7%8E%AF%E5%A2%83%EF%BC%88%E4%BA%8C%EF%BC%89/" rel="next" title="基于Xorg的Linux桌面环境（二）">
+      基于Xorg的Linux桌面环境（二） <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#X%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86"><span class="nav-number">2.</span> <span class="nav-text">X基本知识</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E6%9C%AF%E8%AF%AD"><span class="nav-number">2.1.</span> <span class="nav-text">基本术语</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%84%E6%88%90%E9%83%A8%E5%88%86"><span class="nav-number">2.2.</span> <span class="nav-text">组成部分</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#C-S%E6%9E%B6%E6%9E%84%E8%A7%A3%E9%87%8A"><span class="nav-number">2.3.</span> <span class="nav-text">C&#x2F;S架构解释</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%AF%E5%8A%A8%E4%B8%80%E4%B8%AAX-Server%E5%B9%B6%E5%B0%86X-Client%E8%BF%9E%E6%8E%A5%E5%88%B0X-Server"><span class="nav-number">3.</span> <span class="nav-text">启动一个X Server并将X Client连接到X Server</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E5%AE%89%E8%A3%85"><span class="nav-number">3.1.</span> <span class="nav-text">系统安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Xorg%E5%AE%89%E8%A3%85"><span class="nav-number">3.2.</span> <span class="nav-text">Xorg安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%AF%E5%8A%A8X-Server"><span class="nav-number">3.3.</span> <span class="nav-text">启动X Server</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%8B%E5%8A%A8%E5%9C%A8%E6%9C%AC%E5%9C%B0%E5%90%AF%E5%8A%A8X-Client%E5%B9%B6%E8%BF%9E%E6%8E%A5%E8%87%B3X-Server"><span class="nav-number">3.4.</span> <span class="nav-text">手动在本地启动X Client并连接至X Server</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#X-Forwarding"><span class="nav-number">4.</span> <span class="nav-text">X Forwarding</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEArch%E8%99%9A%E6%8B%9F%E6%9C%BA"><span class="nav-number">4.1.</span> <span class="nav-text">配置Arch虚拟机</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%AF%E7%94%A8sshd%E7%9A%84X-Forwarding%E5%8A%9F%E8%83%BD"><span class="nav-number">4.1.1.</span> <span class="nav-text">启用sshd的X Forwarding功能</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9C%A8Ubuntu%E6%A1%8C%E9%9D%A2%E7%8E%AF%E5%A2%83%E4%B8%8B%E4%B8%8A%E4%BD%BF%E7%94%A8ssh-X-Forwarding%E5%90%AF%E5%8A%A8%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B8%AD%E7%9A%84xterm"><span class="nav-number">4.2.</span> <span class="nav-text">在Ubuntu桌面环境下上使用ssh X Forwarding启动虚拟机中的xterm</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#X-Forwarding%E4%B8%8EVNC%E3%80%81RDP%E6%8A%80%E6%9C%AF%E7%9A%84%E6%AF%94%E8%BE%83"><span class="nav-number">4.3.</span> <span class="nav-text">X Forwarding与VNC、RDP技术的比较</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="nav-number">5.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Liu Peiyuan"
+      src="https://cdn.jsdelivr.net/gh/lpypl/picgo-repo/data/1639911209663.jpg">
+  <p class="site-author-name" itemprop="name">Liu Peiyuan</p>
+  <div class="site-description" itemprop="description">刘沛源的博客</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">46</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lpypl" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lpypl" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:lpy.henu@gmail.com" title="E-Mail → mailto:lpy.henu@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://t.me/lpypl" title="Telegram → https:&#x2F;&#x2F;t.me&#x2F;lpypl" rel="noopener" target="_blank"><i class="fab fa-telegram fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Liu Peiyuan</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+      <span class="post-meta-item-text">站点总字数：</span>
+    <span title="站点总字数">67k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">2:02</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://lpypl.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "https://blog.lpypl.top/2020/12/28/%E5%9F%BA%E4%BA%8EXorg%E7%9A%84Linux%E6%A1%8C%E9%9D%A2%E7%8E%AF%E5%A2%83%EF%BC%88%E4%B8%80%EF%BC%89/";
+    this.page.identifier = "2020/12/28/基于Xorg的Linux桌面环境（一）/";
+    this.page.title = "基于Xorg的Linux桌面环境（一）";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://lpypl.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>
